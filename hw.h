@@ -9,6 +9,7 @@
 #include "stm32f4xx_ll_usart.h"
 #include "stm32f4xx_ll_spi.h"
 #include "stm32f4xx_ll_utils.h"
+#include "stm32f4xx_ll_tim.h"
 #endif
 
 #ifdef stm32f7
@@ -19,6 +20,7 @@
 #include "stm32f7xx_ll_usart.h"
 #include "stm32f7xx_ll_spi.h"
 #include "stm32f7xx_ll_utils.h"
+#include "stm32f7xx_ll_tim.h"
 #endif
 
 #ifdef stm32f0
@@ -29,6 +31,7 @@
 #include "stm32f0xx_ll_usart.h"
 #include "stm32f0xx_ll_spi.h"
 #include "stm32f0xx_ll_utils.h"
+#include "stm32f0xx_ll_tim.h"
 #endif
 
 #include "hal.h"
@@ -45,7 +48,6 @@
 #include "stm32f4xx_ll_i2c.h"
 #include "stm32f4xx_ll_iwdg.h"
 #include "stm32f4xx_ll_rtc.h"
-#include "stm32f4xx_ll_tim.h"
 #include "stm32f4xx_ll_wwdg.h"
 #include "stm32f4xx_ll_rng.h"
 #include "stm32f4xx_ll_lptim.h"

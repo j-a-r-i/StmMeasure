@@ -112,6 +112,9 @@ tags:
 flash:
 	xcopy /Y $(PROJECT).bin e:
 
+debug:
+	d:/usr/openocd/bin/openocd.exe -s d:/usr/openocd/share/openocd/scripts/ -f board/stm32f4discovery.cfg -c init -c "reset init"
+
 .s.o:
 	+@echo "Assemble: $(notdir $<)"
 	@$(AS) -c $(ASM_FLAGS) $(INCLUDE_PATHS) -o $@ $<

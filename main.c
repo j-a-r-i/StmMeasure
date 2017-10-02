@@ -21,25 +21,25 @@ int main()
 	set_LED1;
 	clr_LED2;
 	clr_LED3;
-	clr_LED4;
+	//clr_LED4;
 	LL_mDelay(DELAY);
 
 	clr_LED1;
 	set_LED2;
 	clr_LED3;
-	clr_LED4;
+	//clr_LED4;
 	LL_mDelay(DELAY);
 
 	clr_LED1;
 	clr_LED2;
 	clr_LED3;
-	set_LED4;
+	//set_LED4;
 	LL_mDelay(DELAY);
 
 	clr_LED1;
 	clr_LED2;
 	set_LED3;
-	clr_LED4;
+	//clr_LED4;
 	LL_mDelay(DELAY);
 
 	uart_sends(mysensor_set(1,1, V_TEMP, 12));
