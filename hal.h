@@ -1,6 +1,7 @@
 #ifndef __HAL_H
 #define __HAL_H
 
+/* STM32F4
 #define set_LED1 LL_GPIO_SetOutputPin(GPIOD, LL_GPIO_PIN_13)
 #define clr_LED1 LL_GPIO_ResetOutputPin(GPIOD, LL_GPIO_PIN_13)
 #define set_LED2 LL_GPIO_SetOutputPin(GPIOD, LL_GPIO_PIN_12)
@@ -9,6 +10,15 @@
 #define clr_LED3 LL_GPIO_ResetOutputPin(GPIOD, LL_GPIO_PIN_14)
 #define set_LED4 LL_GPIO_SetOutputPin(GPIOD, LL_GPIO_PIN_15)
 #define clr_LED4 LL_GPIO_ResetOutputPin(GPIOD, LL_GPIO_PIN_15)
+*/
+
+/* STM32F7 */
+#define set_LED1 LL_GPIO_SetOutputPin(GPIOB, LL_GPIO_PIN_0)
+#define clr_LED1 LL_GPIO_ResetOutputPin(GPIOB, LL_GPIO_PIN_0)
+#define set_LED2 LL_GPIO_SetOutputPin(GPIOB, LL_GPIO_PIN_7)
+#define clr_LED2 LL_GPIO_ResetOutputPin(GPIOB, LL_GPIO_PIN_7)
+#define set_LED3 LL_GPIO_SetOutputPin(GPIOB, LL_GPIO_PIN_14)
+#define clr_LED3 LL_GPIO_ResetOutputPin(GPIOB, LL_GPIO_PIN_14)
 
 #define IO_MODE_INPUT  0
 #define IO_MODE_OUTPUT 1
@@ -27,5 +37,7 @@ extern uint8_t io_read(uint8_t pin);
 extern void uart_init();
 extern void uart_send(char ch);
 extern void uart_sends(char *buf);
+
+extern void timer2_init();
 
 #endif

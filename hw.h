@@ -36,6 +36,14 @@
 
 #include "hal.h"
 
+#define EV_TIMER2  0x01
+#define EV_UART_RX 0x02
+
+extern uint32_t gEvents;
+extern uint8_t  gUartRx;
+
+extern void error(uint8_t code);
+
 /*
 #include "stm32f4xx_ll_pwr.h"
 #include "stm32f4xx_ll_exti.h"

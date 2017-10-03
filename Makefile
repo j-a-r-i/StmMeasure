@@ -1,30 +1,40 @@
 
 
-PROJECT = test
+PROJECT = meas
+DEV_CPU = 7
+PLACE=1
 
-DIR_MBED = D:/blinky/mbed-os
-#DIR_MBED = C:/home/mbed/blinky/mbed-os
+ifeq ($(PLACE),1)
+	DIR_MBED = D:/blinky/mbed-os
+	TOOLPATH = d:/usr/gcc-arm/bin/arm-none-eabi
+endif
+ifeq ($(PLACE),2)
+	DIR_MBED = C:/home/mbed/blinky/mbed-os
+	TOOLPATH = c:/usr/gcc-arm/bin/arm-none-eabi
+endif
 
-TOOLPATH = d:/usr/gcc-arm/bin/arm-none-eabi
-#TOOLPATH = c:/usr/gcc-arm/bin/arm-none-eabi
+ifeq ($(DEV_CPU),0)
+	DEV_FAMILY = stm32f0
+	DEV_DEVICE = stm32f072
+	DEV_FLASH = STM32F072RBTx
+	DEV_FPU = 
+	NAME = STM32F0
+endif
+ifeq ($(DEV_CPU),4)
+	DEV_FAMILY = stm32f4
+	DEV_DEVICE = stm32f407
+	DEV_FLASH = STM32F407VGTx
+	DEV_FPU = -mfpu=fpv4-sp-d16 -mfloat-abi=softfp
+	NAME = STM32F4
+endif
+ifeq ($(DEV_CPU),7)
+	DEV_FAMILY = stm32f7
+	DEV_DEVICE = stm32f767
+	DEV_FLASH = STM32F767ZITx
+	DEV_FPU = -mfpu=fpv5-d16 -mfloat-abi=softfp
+	NAME = STM32F7
+endif
 
-DEV_FAMILY = stm32f4
-DEV_DEVICE = stm32f407
-DEV_FLASH = STM32F407VGTx
-DEV_CPU = 4
-DEV_FPU = -mfpu=fpv4-sp-d16 -mfloat-abi=softfp
-
-#DEV_FAMILY = stm32f7
-#DEV_DEVICE = stm32f767
-#DEV_FLASH = STM32F767ZITx
-#DEV_CPU = 7
-#DEV_FPU = -mfpu=fpv5-d16 -mfloat-abi=softfp
-
-#DEV_FAMILY = stm32f0
-#DEV_DEVICE = stm32f072
-#DEV_FLASH = STM32F072RBTx
-#DEV_CPU = 0
-#DEV_FPU = 
 
 
 
@@ -98,9 +108,12 @@ PREPROC = $(TOOLPATH)-cpp -E -P $(LD_FLAGS) $(FLAGS)
 SIZE    = $(TOOLPATH)-size
 
 ###############################################################################
-.PHONY: all lst size debug flash tags clean
+.PHONY: all lst size debug flash tags clean info
 
 all: $(PROJECT).bin 
+
+info:
+	@echo $(NAME), $(DEV_FAMILY), $(DEV_FLASH)
 
 size:
 	$(SIZE) $(PROJECT).elf
@@ -113,7 +126,8 @@ flash:
 	xcopy /Y $(PROJECT).bin e:
 
 debug:
-	d:/usr/openocd/bin/openocd.exe -s d:/usr/openocd/share/openocd/scripts/ -f board/stm32f4discovery.cfg -c init -c "reset init"
+#	d:/usr/openocd/bin/openocd.exe -s d:/usr/openocd/share/openocd/scripts/ -f board/stm32f4discovery.cfg -c init -c "reset init"
+	d:/usr/openocd/bin/openocd.exe -s d:/usr/openocd/share/openocd/scripts/ -f board/st_nucleo_f7.cfg -c init -c "reset init"
 
 .s.o:
 	+@echo "Assemble: $(notdir $<)"

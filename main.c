@@ -1,48 +1,86 @@
 #include "hw.h"
 #include "hal.h"
 #include "mysensor.h"
+#include "sump.h"
 
 void     SystemClock_Config(void);
 
 #define DELAY 100
 
+uint32_t gEvents;
+uint8_t gState;
+uint8_t temp;
+
+//------------------------------------------------------------------------------
+void state_change()
+{
+    switch (gState) {
+    case 0:
+	set_LED1;
+	clr_LED2;
+	break;
+    case 1:
+	break;
+    case 2:
+	clr_LED1;
+	set_LED2;
+	break;
+    case 3:
+	//uart_sends(mysensor_set(1,1, V_TEMP, temp));
+	temp++;
+	break;
+    default:
+	break;
+    }
+
+    gState++;
+    if (gState == 4)
+	gState = 0;
+}
 //------------------------------------------------------------------------------
 int main()
 {
+    temp = 1;
+    gEvents = 0;
+    gState = 0;
+    
     SystemClock_Config();
 
     io_init();
     uart_init();
+    timer2_init();
 
-    uart_sends(mysensor_present(1,1, S_TEMP));
-	       
-    
+    //uart_sends(mysensor_present(1,1, S_TEMP));
+	           
+    while (1) {
+	if (gEvents & EV_TIMER2) {
+	    state_change();
+
+	    gEvents &= ~(EV_TIMER2);
+	}
+	if (gEvents & EV_UART_RX) {
+	    LL_GPIO_TogglePin(GPIOB, LL_GPIO_PIN_14);
+
+	    sump_handle(gUartRx);
+	    
+	    gEvents &= ~(EV_UART_RX);
+	}
+    }
+}
+
+//------------------------------------------------------------------------------
+void error(uint8_t code)
+{
     while (1) {
 	set_LED1;
-	clr_LED2;
-	clr_LED3;
-	//clr_LED4;
-	LL_mDelay(DELAY);
-
-	clr_LED1;
 	set_LED2;
-	clr_LED3;
-	//clr_LED4;
-	LL_mDelay(DELAY);
-
-	clr_LED1;
-	clr_LED2;
-	clr_LED3;
-	//set_LED4;
-	LL_mDelay(DELAY);
-
-	clr_LED1;
-	clr_LED2;
 	set_LED3;
-	//clr_LED4;
-	LL_mDelay(DELAY);
+	LL_mDelay(200);
 
-	uart_sends(mysensor_set(1,1, V_TEMP, 12));
+	clr_LED1;
+	clr_LED2;
+	clr_LED3;
+	LL_mDelay(200);
     }
 }
 
