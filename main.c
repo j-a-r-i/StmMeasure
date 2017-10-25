@@ -87,6 +87,35 @@ void error(uint8_t code)
 //------------------------------------------------------------------------------
 void SystemClock_Config(void)
 {
+#ifdef stm32f0
+    LL_FLASH_SetLatency(LL_FLASH_LATENCY_1);
+    LL_RCC_HSI_Enable();
+    while (LL_RCC_HSI_IsReady() != 1);
+
+    LL_RCC_HSI_SetCalibTrimming(16);
+    LL_RCC_PLL_ConfigDomain_SYS(LL_RCC_PLLSOURCE_HSI_DIV_2,
+				LL_RCC_PLL_MUL_12);
+    LL_RCC_PLL_Enable();
+    while (LL_RCC_PLL_IsReady() != 1);
+
+    LL_RCC_SetAHBPrescaler(LL_RCC_SYSCLK_DIV_1);
+    LL_RCC_SetSysClkSource(LL_RCC_SYS_CLKSOURCE_PLL);
+    while(LL_RCC_GetSysClkSource() != LL_RCC_SYS_CLKSOURCE_STATUS_PLL);
+
+    LL_RCC_SetAPB1Prescaler(LL_RCC_APB1_DIV_1);
+
+    LL_Init1msTick(48000000);
+
+    LL_SYSTICK_SetClkSource(LL_SYSTICK_CLKSOURCE_HCLK);
+
+    LL_SetSystemCoreClock(48000000);
+
+    LL_RCC_SetUSARTClockSource(LL_RCC_USART1_CLKSOURCE_PCLK1);
+
+    /* SysTick_IRQn interrupt configuration */
+    NVIC_SetPriority(SysTick_IRQn, 3);
+    
+#else
     LL_RCC_HSE_EnableBypass();
     LL_RCC_HSE_Enable();
     while (LL_RCC_HSE_IsReady() != 1);
@@ -111,6 +140,7 @@ void SystemClock_Config(void)
 
     //SystemCoreClock = 168000000;
     SystemCoreClock = 100000000;
+#endif
 }
 
 #ifdef  USE_FULL_ASSERT

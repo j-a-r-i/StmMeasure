@@ -1,22 +1,34 @@
 
 
 PROJECT = meas
-DEV_CPU = 7
-PLACE=1
+DEV_CPU = 0
+PLACE=3
 
 ifeq ($(PLACE),1)
-	DIR_MBED = D:/blinky/mbed-os
+	DIR_MBED = d:/blinky/mbed-os
 	TOOLPATH = d:/usr/gcc-arm/bin/arm-none-eabi
+	OPENOCD  = d:/usr/openocd/bin/openocd.exe
+	OPENOCD_SCRIPTS = d:/usr/openocd/share/openocd/scripts/
 endif
 ifeq ($(PLACE),2)
-	DIR_MBED = C:/home/mbed/blinky/mbed-os
+	DIR_MBED = c:/home/mbed/blinky/mbed-os
 	TOOLPATH = c:/usr/gcc-arm/bin/arm-none-eabi
+	OPENOCD  = c:/usr/openocd/bin/openocd.exe
+	OPENOCD_SCRIPTS = c:/usr/openocd/share/openocd/scripts/
+endif
+ifeq ($(PLACE),3)
+	DIR_MBED = ../../blinky/mbed-os
+	TOOLPATH = /mnt/bin/gcc-arm/bin/arm-none-eabi
+	OPENOCD  = openocd
+	OPENOCD_SCRIPTS = /usr/openocd/share/openocd/scripts/
 endif
 
 ifeq ($(DEV_CPU),0)
 	DEV_FAMILY = stm32f0
-	DEV_DEVICE = stm32f072
-	DEV_FLASH = STM32F072RBTx
+#	DEV_DEVICE = stm32f072
+#	DEV_FLASH = STM32F072RBTx
+	DEV_DEVICE = stm32f051
+	DEV_FLASH = STM32F051R8Tx
 	DEV_FPU = 
 	NAME = STM32F0
 endif
@@ -37,12 +49,11 @@ endif
 
 
 
-
 OBJECTS += main.o
 OBJECTS += hal.o
 OBJECTS += $(DEV_FAMILY)xx_it.o
 OBJECTS += system_$(DEV_FAMILY)xx.o
-OBJECTS += startup_$(DEV_DEVICE)xx.o
+OBJECTS += startup_$(DEV_DEVICE)x8.o
 OBJECTS += ../drivers/mysensor.o
 OBJECTS += ../drivers/ds1820.o
 OBJECTS += ../drivers/sump.o
@@ -108,7 +119,7 @@ PREPROC = $(TOOLPATH)-cpp -E -P $(LD_FLAGS) $(FLAGS)
 SIZE    = $(TOOLPATH)-size
 
 ###############################################################################
-.PHONY: all lst size debug flash tags clean info
+.PHONY: all lst size debug flash tags clean info openocd
 
 all: $(PROJECT).bin 
 
@@ -122,12 +133,31 @@ clean:
 	rm $(PROJECT).bin $(PROJECT).elf *.o *.d ../drivers/*.o
 tags:
 	ctags -e *.c *.h
+
+#flash:
+#	xcopy /Y $(PROJECT).bin e:
+
+openocd:
+	$(OPENOCD) -s $(OPENOCD_SCRIPTS) -f board/stm32f0discovery.cfg
+
 flash:
-	xcopy /Y $(PROJECT).bin e:
+	$(OPENOCD) -s $(OPENOCD_SCRIPTS) -f board/stm32f0discovery.cfg \
+		-c init \
+		-c "reset init" \
+		-c "sleep 200" \
+		-c "wait_halt 2" \
+		-c "flash write_image erase $(PROJECT).bin 0x08000000" \
+		-c "sleep 200" \
+		-c "verify_image $(PROJECT).bin 0x08000000" \
+		-c "sleep 200" \
+		-c "reset halt" \
+		-c "shutdown"
+
 
 debug:
-#	d:/usr/openocd/bin/openocd.exe -s d:/usr/openocd/share/openocd/scripts/ -f board/stm32f4discovery.cfg -c init -c "reset init"
-	d:/usr/openocd/bin/openocd.exe -s d:/usr/openocd/share/openocd/scripts/ -f board/st_nucleo_f7.cfg -c init -c "reset init"
+	$(OPENOCD) -s $(OPENOCD_SCRIPTS) -f board/stm32f0discovery.cfg -c init -c "reset init"
+#	$(OPENOCD) -s $(OPENOCD_SCRIPTS) -f board/stm32f4discovery.cfg -c init -c "reset init"
+#	$(OPENOCD) -s $(OPENOCD_SCRIPTS) -f board/st_nucleo_f7.cfg -c init -c "reset init"
 
 .s.o:
 	+@echo "Assemble: $(notdir $<)"

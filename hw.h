@@ -32,6 +32,7 @@
 #include "stm32f0xx_ll_spi.h"
 #include "stm32f0xx_ll_utils.h"
 #include "stm32f0xx_ll_tim.h"
+#include "stm32f0xx_ll_cortex.h"
 #endif
 
 #include "hal.h"

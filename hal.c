@@ -11,6 +11,28 @@ void delay_us(uint16_t time)
 //------------------------------------------------------------------------------
 void io_init()
 {
+#ifdef stm32f0
+    LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOC);
+
+    LL_GPIO_SetPinMode(GPIOC, LL_GPIO_PIN_8, LL_GPIO_MODE_OUTPUT);
+    LL_GPIO_SetPinMode(GPIOC, LL_GPIO_PIN_9, LL_GPIO_MODE_OUTPUT);
+
+    LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOA);
+
+    // UART TX
+    LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_9, LL_GPIO_MODE_ALTERNATE);
+    LL_GPIO_SetAFPin_8_15(GPIOA, LL_GPIO_PIN_9, LL_GPIO_AF_7);
+    LL_GPIO_SetPinSpeed(GPIOA, LL_GPIO_PIN_9, LL_GPIO_SPEED_FREQ_HIGH);
+    LL_GPIO_SetPinOutputType(GPIOA, LL_GPIO_PIN_9, LL_GPIO_OUTPUT_PUSHPULL);
+    LL_GPIO_SetPinPull(GPIOA, LL_GPIO_PIN_9, LL_GPIO_PULL_UP);
+
+    // UART RX
+    LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_10, LL_GPIO_MODE_ALTERNATE);
+    LL_GPIO_SetAFPin_8_15(GPIOA, LL_GPIO_PIN_10, LL_GPIO_AF_7);
+    LL_GPIO_SetPinSpeed(GPIOA, LL_GPIO_PIN_10, LL_GPIO_SPEED_FREQ_HIGH);
+    LL_GPIO_SetPinOutputType(GPIOA, LL_GPIO_PIN_10, LL_GPIO_OUTPUT_PUSHPULL);
+    LL_GPIO_SetPinPull(GPIOA, LL_GPIO_PIN_10, LL_GPIO_PULL_UP);
+#endif
 #ifdef stm32f4
     LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOD);
 
@@ -48,7 +70,6 @@ void io_init()
     LL_GPIO_SetAFPin_0_7(GPIOB, LL_GPIO_PIN_4, LL_GPIO_AF_5);
     LL_GPIO_SetPinSpeed(GPIOB, LL_GPIO_PIN_4, LL_GPIO_SPEED_FREQ_HIGH);
     LL_GPIO_SetPinPull(GPIOB, LL_GPIO_PIN_4, LL_GPIO_PULL_DOWN);
-
     // SPI MOSI
     LL_GPIO_SetPinMode(GPIOB, LL_GPIO_PIN_5, LL_GPIO_MODE_ALTERNATE);
     LL_GPIO_SetAFPin_0_7(GPIOB, LL_GPIO_PIN_5, LL_GPIO_AF_5);
@@ -81,6 +102,9 @@ void io_init()
 #endif
 }
 
+#ifdef stm32f0
+#define UART_PORT USART1
+#endif
 #ifdef stm32f4
 #define UART_PORT USART2
 #endif
@@ -89,8 +113,8 @@ void io_init()
 #endif
 
 //------------------------------------------------------------------------------
-//void USARTx_IRQHandler()
-void USART3_IRQHandler()
+void USART1_IRQHandler()
+//void USART3_IRQHandler()
 {
   if (LL_USART_IsActiveFlag_RXNE(UART_PORT) && LL_USART_IsEnabledIT_RXNE(UART_PORT)) {
     /* RXNE flag will be cleared by reading of RDR register (done in call) */
@@ -109,8 +133,10 @@ void USART3_IRQHandler()
 void uart_init()
 {
 #ifdef stm32f0
-    NVIC_SetPriority(USARTx_IRQn, 0);  
-    NVIC_EnableIRQ(USARTx_IRQn);
+    //NVIC_SetPriority(USARTx_IRQn, 0);  
+    //NVIC_EnableIRQ(USARTx_IRQn);
+    NVIC_SetPriority(USART1_IRQn, 0);  
+    NVIC_EnableIRQ(USART1_IRQn);
 #endif
 #ifdef stm32f4
     LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_USART2);
