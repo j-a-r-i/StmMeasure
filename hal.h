@@ -28,6 +28,12 @@
 #define clr_LED3 LL_GPIO_ResetOutputPin(GPIOB, LL_GPIO_PIN_14)
 */
 
+#define PIN_LED1    0
+#define PIN_LED2    1
+#define PIN_DS1820a 2
+#define PIN_DS1820b 3
+#define PIN_DS1820c 2
+
 #define IO_MODE_INPUT  0
 #define IO_MODE_OUTPUT 1
 

@@ -2,6 +2,7 @@
 #include "hal.h"
 #include "mysensor.h"
 #include "sump.h"
+#include "ds1820.h"
 
 void     SystemClock_Config(void);
 
@@ -16,6 +17,7 @@ void state_change()
 {
     switch (gState) {
     case 0:
+	ds1820_measure(PIN_DS1820a);
 	set_LED1;
 	clr_LED2;
 	break;
@@ -26,6 +28,7 @@ void state_change()
 	set_LED2;
 	break;
     case 3:
+	uart_sends("ping\n");
 	//uart_sends(mysensor_set(1,1, V_TEMP, temp));
 	temp++;
 	break;
@@ -37,6 +40,23 @@ void state_change()
     if (gState == 4)
 	gState = 0;
 }
+
+//------------------------------------------------------------------------------
+void command(uint8_t cmd)
+{
+    switch (cmd) {
+    case '1':
+	uart_sends("one\n");
+	break;
+    case '2':
+	uart_sends("two\n");
+	break;
+    default:
+	uart_sends("invalid commmand!\n");
+	break;
+    }
+}
+
 //------------------------------------------------------------------------------
 int main()
 {
@@ -50,6 +70,8 @@ int main()
     uart_init();
     timer2_init();
 
+    ds1820_init(PIN_DS1820a);
+    
     //uart_sends(mysensor_present(1,1, S_TEMP));
 	           
     while (1) {
@@ -59,9 +81,10 @@ int main()
 	    gEvents &= ~(EV_TIMER2);
 	}
 	if (gEvents & EV_UART_RX) {
-	    LL_GPIO_TogglePin(GPIOB, LL_GPIO_PIN_14);
+	    //LL_GPIO_TogglePin(GPIOC, LL_GPIO_PIN_8);
 
-	    sump_handle(gUartRx);
+	    //sump_handle(gUartRx);
+	    command(gUartRx);
 	    
 	    gEvents &= ~(EV_UART_RX);
 	}
@@ -74,12 +97,10 @@ void error(uint8_t code)
     while (1) {
 	set_LED1;
 	set_LED2;
-	set_LED3;
 	LL_mDelay(200);
 
 	clr_LED1;
 	clr_LED2;
-	clr_LED3;
 	LL_mDelay(200);
     }
 }

@@ -40,6 +40,9 @@
 #define EV_TIMER2  0x01
 #define EV_UART_RX 0x02
 
+#define ERR_INVALID_PIN 0x01
+
+
 extern uint32_t gEvents;
 extern uint8_t  gUartRx;
 

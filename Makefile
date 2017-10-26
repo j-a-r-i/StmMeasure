@@ -132,7 +132,7 @@ size:
 clean:
 	rm $(PROJECT).bin $(PROJECT).elf *.o *.d ../drivers/*.o
 tags:
-	ctags -e *.c *.h
+	etags *.[ch] ../drivers/*.[ch]
 
 #flash:
 #	xcopy /Y $(PROJECT).bin e:

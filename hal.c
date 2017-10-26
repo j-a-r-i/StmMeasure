@@ -3,6 +3,21 @@
 
 uint8_t gUartRx;
 
+typedef struct IoPinTable {
+    GPIO_TypeDef *port;
+    int pin;
+} IoPinTable_t;
+
+IoPinTable_t PINMAP[] = {
+    { GPIOC, LL_GPIO_PIN_8 },
+    { GPIOC, LL_GPIO_PIN_9 },
+    { GPIOA, LL_GPIO_PIN_1 },
+    { GPIOA, LL_GPIO_PIN_2 },
+    { 0, 0 }};
+
+#define MAX_PINMAP sizeof PINMAP / sizeof PINMAP[0]
+
+
 //------------------------------------------------------------------------------
 void delay_us(uint16_t time)
 {
@@ -21,14 +36,14 @@ void io_init()
 
     // UART TX
     LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_9, LL_GPIO_MODE_ALTERNATE);
-    LL_GPIO_SetAFPin_8_15(GPIOA, LL_GPIO_PIN_9, LL_GPIO_AF_7);
+    LL_GPIO_SetAFPin_8_15(GPIOA, LL_GPIO_PIN_9, LL_GPIO_AF_1);
     LL_GPIO_SetPinSpeed(GPIOA, LL_GPIO_PIN_9, LL_GPIO_SPEED_FREQ_HIGH);
     LL_GPIO_SetPinOutputType(GPIOA, LL_GPIO_PIN_9, LL_GPIO_OUTPUT_PUSHPULL);
     LL_GPIO_SetPinPull(GPIOA, LL_GPIO_PIN_9, LL_GPIO_PULL_UP);
 
     // UART RX
     LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_10, LL_GPIO_MODE_ALTERNATE);
-    LL_GPIO_SetAFPin_8_15(GPIOA, LL_GPIO_PIN_10, LL_GPIO_AF_7);
+    LL_GPIO_SetAFPin_8_15(GPIOA, LL_GPIO_PIN_10, LL_GPIO_AF_1);
     LL_GPIO_SetPinSpeed(GPIOA, LL_GPIO_PIN_10, LL_GPIO_SPEED_FREQ_HIGH);
     LL_GPIO_SetPinOutputType(GPIOA, LL_GPIO_PIN_10, LL_GPIO_OUTPUT_PUSHPULL);
     LL_GPIO_SetPinPull(GPIOA, LL_GPIO_PIN_10, LL_GPIO_PULL_UP);
@@ -102,6 +117,51 @@ void io_init()
 #endif
 }
 
+void io_mode(uint8_t pin, uint8_t mode)
+{
+    if (pin >= MAX_PINMAP)
+	error(ERR_INVALID_PIN);
+
+    if (mode == IO_MODE_INPUT) {
+	LL_GPIO_SetPinMode(PINMAP[pin].port,
+			   PINMAP[pin].pin,
+			   LL_GPIO_MODE_INPUT);
+    }
+    else {
+	LL_GPIO_SetPinMode(PINMAP[pin].port,
+			   PINMAP[pin].pin,
+			   LL_GPIO_MODE_OUTPUT);
+    }
+}
+
+void io_set(uint8_t pin)
+{
+    if (pin >= MAX_PINMAP)
+	error(ERR_INVALID_PIN);
+
+    LL_GPIO_SetOutputPin(PINMAP[pin].port, PINMAP[pin].pin);
+}
+
+void io_clear(uint8_t pin)
+{
+    if (pin >= MAX_PINMAP)
+	error(ERR_INVALID_PIN);
+
+    LL_GPIO_ResetOutputPin(PINMAP[pin].port, PINMAP[pin].pin);
+}
+
+uint8_t io_read(uint8_t pin)
+{
+    if (pin >= MAX_PINMAP)
+	error(ERR_INVALID_PIN);
+
+    return LL_GPIO_IsInputPinSet(PINMAP[pin].port, PINMAP[pin].pin);
+}
+
+    
+
+
+
 #ifdef stm32f0
 #define UART_PORT USART1
 #endif
@@ -132,7 +192,10 @@ void USART1_IRQHandler()
 //------------------------------------------------------------------------------
 void uart_init()
 {
+    //uint32_t pclk;
+    
 #ifdef stm32f0
+    LL_APB1_GRP2_EnableClock(LL_APB1_GRP2_PERIPH_USART1);
     //NVIC_SetPriority(USARTx_IRQn, 0);  
     //NVIC_EnableIRQ(USARTx_IRQn);
     NVIC_SetPriority(USART1_IRQn, 0);  
@@ -155,14 +218,18 @@ void uart_init()
 			     LL_USART_PARITY_NONE,
 			     LL_USART_STOPBITS_1);
 
+    //pclk = LL_RCC_GetUSARTClockFreq(LL_RCC_USART1_CLKSOURCE);
+
     LL_USART_SetBaudRate(UART_PORT,
-			 SystemCoreClock/2,
+			 SystemCoreClock/1,       // for stm32f0 1 others 2
 			 LL_USART_OVERSAMPLING_16,
 //			 9600);
 			 115200); 
 
     LL_USART_Enable(UART_PORT);
 
+    LL_USART_ConfigAsyncMode(USART1); // for stm32f0
+    
     LL_USART_EnableIT_RXNE(UART_PORT);
     LL_USART_EnableIT_ERROR(UART_PORT);
 }
@@ -195,6 +262,7 @@ void TIM2_IRQHandler(void)
     gEvents |= EV_TIMER2;
 }
 
+//------------------------------------------------------------------------------
 void timer2_init()
 {
     uint32_t clock, reload;
