@@ -119,7 +119,7 @@ PREPROC = $(TOOLPATH)-cpp -E -P $(LD_FLAGS) $(FLAGS)
 SIZE    = $(TOOLPATH)-size
 
 ###############################################################################
-.PHONY: all lst size debug flash tags clean info openocd
+.PHONY: all lst size debug flash tags clean info ocd
 
 all: $(PROJECT).bin 
 
@@ -137,7 +137,7 @@ tags:
 #flash:
 #	xcopy /Y $(PROJECT).bin e:
 
-openocd:
+ocd:
 	$(OPENOCD) -s $(OPENOCD_SCRIPTS) -f board/stm32f0discovery.cfg
 
 flash:

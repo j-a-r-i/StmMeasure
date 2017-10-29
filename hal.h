@@ -32,7 +32,7 @@
 #define PIN_LED2    1
 #define PIN_DS1820a 2
 #define PIN_DS1820b 3
-#define PIN_DS1820c 2
+#define PIN_DS1820c 4
 
 #define IO_MODE_INPUT  0
 #define IO_MODE_OUTPUT 1

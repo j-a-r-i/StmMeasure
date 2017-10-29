@@ -11,8 +11,9 @@ typedef struct IoPinTable {
 IoPinTable_t PINMAP[] = {
     { GPIOC, LL_GPIO_PIN_8 },
     { GPIOC, LL_GPIO_PIN_9 },
-    { GPIOA, LL_GPIO_PIN_1 },
-    { GPIOA, LL_GPIO_PIN_2 },
+    { GPIOB, LL_GPIO_PIN_3 },
+    { GPIOB, LL_GPIO_PIN_4 },
+    { GPIOB, LL_GPIO_PIN_5 },
     { 0, 0 }};
 
 #define MAX_PINMAP sizeof PINMAP / sizeof PINMAP[0]
@@ -21,18 +22,27 @@ IoPinTable_t PINMAP[] = {
 //------------------------------------------------------------------------------
 void delay_us(uint16_t time)
 {
+    volatile uint16_t counter = 2 * time;
+    while(counter--) {
+	asm("nop");
+    }
 }
 
 //------------------------------------------------------------------------------
 void io_init()
 {
 #ifdef stm32f0
+    LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOA);
+    LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOB);
     LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOC);
 
     LL_GPIO_SetPinMode(GPIOC, LL_GPIO_PIN_8, LL_GPIO_MODE_OUTPUT);
     LL_GPIO_SetPinMode(GPIOC, LL_GPIO_PIN_9, LL_GPIO_MODE_OUTPUT);
 
-    LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOA);
+    LL_GPIO_SetPinMode(GPIOB, LL_GPIO_PIN_3, LL_GPIO_MODE_OUTPUT);
+    LL_GPIO_SetPinMode(GPIOB, LL_GPIO_PIN_4, LL_GPIO_MODE_OUTPUT);
+    LL_GPIO_SetPinMode(GPIOB, LL_GPIO_PIN_5, LL_GPIO_MODE_OUTPUT);
+
 
     // UART TX
     LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_9, LL_GPIO_MODE_ALTERNATE);

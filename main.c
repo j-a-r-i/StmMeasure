@@ -10,7 +10,9 @@ void     SystemClock_Config(void);
 
 uint32_t gEvents;
 uint8_t gState;
-uint8_t temp;
+uint16_t temp[3];
+
+
 
 //------------------------------------------------------------------------------
 void state_change()
@@ -24,13 +26,13 @@ void state_change()
     case 1:
 	break;
     case 2:
+	temp[0] = ds1820_read_temp(PIN_DS1820a);
 	clr_LED1;
 	set_LED2;
 	break;
     case 3:
-	uart_sends("ping\n");
-	//uart_sends(mysensor_set(1,1, V_TEMP, temp));
-	temp++;
+	uart_sends("ping\r\n");
+	uart_sends(mysensor_set(1,1, V_TEMP, temp[0]));
 	break;
     default:
 	break;
@@ -46,13 +48,13 @@ void command(uint8_t cmd)
 {
     switch (cmd) {
     case '1':
-	uart_sends("one\n");
+	uart_sends("one\r\n");
 	break;
     case '2':
-	uart_sends("two\n");
+	uart_sends("two\r\n");
 	break;
     default:
-	uart_sends("invalid commmand!\n");
+	uart_sends("invalid commmand!\r\n");
 	break;
     }
 }
@@ -60,7 +62,6 @@ void command(uint8_t cmd)
 //------------------------------------------------------------------------------
 int main()
 {
-    temp = 1;
     gEvents = 0;
     gState = 0;
     
@@ -72,8 +73,22 @@ int main()
 
     ds1820_init(PIN_DS1820a);
     
-    //uart_sends(mysensor_present(1,1, S_TEMP));
-	           
+    uart_sends(mysensor_present(1,1, S_TEMP));
+
+/*    while (1) {
+	uint16_t i;
+
+	io_set(PIN_LED1);
+	for (i=0; i<1000; i++) {
+	    delay_us(1000);
+	}
+
+	io_clear(PIN_LED1);
+	for (i=0; i<1000; i++) {
+	    delay_us(1000);
+	}
+	}*/
+    
     while (1) {
 	if (gEvents & EV_TIMER2) {
 	    state_change();
