@@ -51,6 +51,7 @@ extern uint8_t io_read(uint8_t pin);
 extern void uart_init();
 extern void uart_send(char ch);
 extern void uart_sends(char *buf);
+extern void uart_send_nl();
 
 extern void timer2_init();
 

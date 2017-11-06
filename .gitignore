@@ -2,3 +2,4 @@
 *.d
 test.bin
 test.elf
+/TAGS

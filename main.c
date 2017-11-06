@@ -1,6 +1,7 @@
 #include "hw.h"
 #include "hal.h"
-#include "mysensor.h"
+//#include "mysensor.h"
+#include "outsens.h"
 #include "sump.h"
 #include "ds1820.h"
 
@@ -10,7 +11,10 @@ void     SystemClock_Config(void);
 
 uint32_t gEvents;
 uint8_t gState;
-uint16_t temp[3];
+uint8_t gCounter;
+
+#define TEMP_COUNT 3
+uint16_t temp[TEMP_COUNT];
 
 
 
@@ -23,23 +27,20 @@ void state_change()
 	set_LED1;
 	clr_LED2;
 	break;
-    case 1:
-	break;
     case 2:
 	temp[0] = ds1820_read_temp(PIN_DS1820a);
 	clr_LED1;
 	set_LED2;
 	break;
     case 3:
-	uart_sends("ping\r\n");
-	uart_sends(mysensor_set(1,1, V_TEMP, temp[0]));
-	break;
-    default:
+	//uart_sends(mysensor_set(1,1, V_TEMP, temp[0]));
+	uart_sends(outsens_set(gCounter, temp, TEMP_COUNT));
+	gCounter++;
 	break;
     }
 
     gState++;
-    if (gState == 4)
+    if (gState == 60)
 	gState = 0;
 }
 
@@ -48,13 +49,16 @@ void command(uint8_t cmd)
 {
     switch (cmd) {
     case '1':
-	uart_sends("one\r\n");
+	uart_sends("one");
+	uart_send_nl();
 	break;
     case '2':
-	uart_sends("two\r\n");
+	uart_sends("two");
+	uart_send_nl();
 	break;
     default:
-	uart_sends("invalid commmand!\r\n");
+	uart_sends("invalid commmand!");
+	uart_send_nl();
 	break;
     }
 }
@@ -72,8 +76,15 @@ int main()
     timer2_init();
 
     ds1820_init(PIN_DS1820a);
+
+    outsens_init();
+    //mysensor_init();
+
+    temp[1] = 2;
+    temp[2] = 3;
     
-    uart_sends(mysensor_present(1,1, S_TEMP));
+    uart_sends("starting..\n");
+    //uart_sends(mysensor_present(1,1, S_TEMP));
 
 /*    while (1) {
 	uint16_t i;
@@ -184,7 +195,7 @@ void assert_failed(uint8_t *file, uint32_t line)
 {
     uart_sends("ASSERT ERROR in ");
     uart_sends(file);
-    uart_sends("!\r\n");
+    uart_send_nl();
 
     while (1);
 }
