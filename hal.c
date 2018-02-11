@@ -1,6 +1,8 @@
 #include "hw.h"
 #include "hal.h"
 
+#define NULL (void*)0
+
 uint8_t gUartRx;
 
 typedef struct IoPinTable {
@@ -9,12 +11,13 @@ typedef struct IoPinTable {
 } IoPinTable_t;
 
 IoPinTable_t PINMAP[] = {
-    { GPIOC, LL_GPIO_PIN_8 },
-    { GPIOC, LL_GPIO_PIN_9 },
-    { GPIOB, LL_GPIO_PIN_3 },
-    { GPIOB, LL_GPIO_PIN_4 },
-    { GPIOB, LL_GPIO_PIN_5 },
-    { 0, 0 }};
+    [PIN_LED1]      = { GPIOC, LL_GPIO_PIN_8 },
+    [PIN_LED2]      = { GPIOC, LL_GPIO_PIN_9 },
+    [PIN_DS1820a]   = { GPIOB, LL_GPIO_PIN_3 },
+    [PIN_DS1820b]   = { GPIOB, LL_GPIO_PIN_4 },
+    [PIN_DS1820c]   = { GPIOB, LL_GPIO_PIN_5 },
+    [PIN_RFM12_SEL] = { GPIOA, LL_GPIO_PIN_4 },
+};
 
 #define MAX_PINMAP sizeof PINMAP / sizeof PINMAP[0]
 
@@ -28,6 +31,21 @@ void delay_us(uint16_t time)
     }
 }
 
+void pin_alt(GPIO_TypeDef *GPIOx, uint32_t pin, uint32_t alternate, uint32_t pull)
+{
+    LL_GPIO_SetPinMode(GPIOx, pin, LL_GPIO_MODE_ALTERNATE);
+    if (pin < LL_GPIO_PIN_8)
+	LL_GPIO_SetAFPin_0_7(GPIOx, pin, alternate);
+    else
+	LL_GPIO_SetAFPin_8_15(GPIOx, pin, alternate);
+
+    if (pull != LL_GPIO_PULL_NO)
+	LL_GPIO_SetPinOutputType(GPIOx, pin, LL_GPIO_OUTPUT_PUSHPULL);
+
+    LL_GPIO_SetPinSpeed(GPIOx, pin, LL_GPIO_SPEED_FREQ_HIGH);
+    LL_GPIO_SetPinPull(GPIOx, pin, pull);
+}
+
 //------------------------------------------------------------------------------
 void io_init()
 {
@@ -36,27 +54,28 @@ void io_init()
     LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOB);
     LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOC);
 
-    LL_GPIO_SetPinMode(GPIOC, LL_GPIO_PIN_8, LL_GPIO_MODE_OUTPUT);
-    LL_GPIO_SetPinMode(GPIOC, LL_GPIO_PIN_9, LL_GPIO_MODE_OUTPUT);
+    LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_4, LL_GPIO_MODE_OUTPUT);
 
     LL_GPIO_SetPinMode(GPIOB, LL_GPIO_PIN_3, LL_GPIO_MODE_OUTPUT);
     LL_GPIO_SetPinMode(GPIOB, LL_GPIO_PIN_4, LL_GPIO_MODE_OUTPUT);
     LL_GPIO_SetPinMode(GPIOB, LL_GPIO_PIN_5, LL_GPIO_MODE_OUTPUT);
+     
+    LL_GPIO_SetPinMode(GPIOC, LL_GPIO_PIN_8, LL_GPIO_MODE_OUTPUT);
+    LL_GPIO_SetPinMode(GPIOC, LL_GPIO_PIN_9, LL_GPIO_MODE_OUTPUT);
 
+    pin_alt(GPIOA, LL_GPIO_PIN_5,  LL_GPIO_AF_0, LL_GPIO_PULL_NO);  // SPI1 SCK
+    pin_alt(GPIOA, LL_GPIO_PIN_6,  LL_GPIO_AF_0, LL_GPIO_PULL_NO);  // SPI1 MISO
+    pin_alt(GPIOA, LL_GPIO_PIN_7,  LL_GPIO_AF_0, LL_GPIO_PULL_NO);  // SPI1 MOSI
 
-    // UART TX
-    LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_9, LL_GPIO_MODE_ALTERNATE);
-    LL_GPIO_SetAFPin_8_15(GPIOA, LL_GPIO_PIN_9, LL_GPIO_AF_1);
-    LL_GPIO_SetPinSpeed(GPIOA, LL_GPIO_PIN_9, LL_GPIO_SPEED_FREQ_HIGH);
-    LL_GPIO_SetPinOutputType(GPIOA, LL_GPIO_PIN_9, LL_GPIO_OUTPUT_PUSHPULL);
-    LL_GPIO_SetPinPull(GPIOA, LL_GPIO_PIN_9, LL_GPIO_PULL_UP);
-
-    // UART RX
-    LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_10, LL_GPIO_MODE_ALTERNATE);
-    LL_GPIO_SetAFPin_8_15(GPIOA, LL_GPIO_PIN_10, LL_GPIO_AF_1);
-    LL_GPIO_SetPinSpeed(GPIOA, LL_GPIO_PIN_10, LL_GPIO_SPEED_FREQ_HIGH);
-    LL_GPIO_SetPinOutputType(GPIOA, LL_GPIO_PIN_10, LL_GPIO_OUTPUT_PUSHPULL);
-    LL_GPIO_SetPinPull(GPIOA, LL_GPIO_PIN_10, LL_GPIO_PULL_UP);
+    pin_alt(GPIOB, LL_GPIO_PIN_13, LL_GPIO_AF_0, LL_GPIO_PULL_NO);  // SPI2 SCK
+    pin_alt(GPIOB, LL_GPIO_PIN_14, LL_GPIO_AF_0, LL_GPIO_PULL_NO);  // SPI2 MISO
+    pin_alt(GPIOB, LL_GPIO_PIN_15, LL_GPIO_AF_0, LL_GPIO_PULL_NO);  // SPI2 MOSI
+ 
+    pin_alt(GPIOA, LL_GPIO_PIN_9,  LL_GPIO_AF_1, LL_GPIO_PULL_UP);  // UART1 TX
+    pin_alt(GPIOA, LL_GPIO_PIN_10, LL_GPIO_AF_1, LL_GPIO_PULL_UP);  // UART1 RX
+ 
+    pin_alt(GPIOA, LL_GPIO_PIN_2,  LL_GPIO_AF_1, LL_GPIO_PULL_UP);  // UART2 TX
+    pin_alt(GPIOA, LL_GPIO_PIN_3,  LL_GPIO_AF_1, LL_GPIO_PULL_UP);  // UART2 RX
 #endif
 #ifdef stm32f4
     LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOD);
@@ -68,38 +87,14 @@ void io_init()
 
     LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOA);
 
-    // UART TX
-    LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_2, LL_GPIO_MODE_ALTERNATE);
-    LL_GPIO_SetAFPin_0_7(GPIOA, LL_GPIO_PIN_2, LL_GPIO_AF_7);
-    LL_GPIO_SetPinSpeed(GPIOA, LL_GPIO_PIN_2, LL_GPIO_SPEED_FREQ_HIGH);
-    LL_GPIO_SetPinOutputType(GPIOA, LL_GPIO_PIN_2, LL_GPIO_OUTPUT_PUSHPULL);
-    LL_GPIO_SetPinPull(GPIOA, LL_GPIO_PIN_2, LL_GPIO_PULL_UP);
-
-    // UART RX
-    LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_3, LL_GPIO_MODE_ALTERNATE);
-    LL_GPIO_SetAFPin_0_7(GPIOA, LL_GPIO_PIN_3, LL_GPIO_AF_7);
-    LL_GPIO_SetPinSpeed(GPIOA, LL_GPIO_PIN_3, LL_GPIO_SPEED_FREQ_HIGH);
-    LL_GPIO_SetPinOutputType(GPIOA, LL_GPIO_PIN_3, LL_GPIO_OUTPUT_PUSHPULL);
-    LL_GPIO_SetPinPull(GPIOA, LL_GPIO_PIN_3, LL_GPIO_PULL_UP);
+    pin_alt(GPIOA, LL_GPIO_PIN_2,  LL_GPIO_AF_7, LL_GPIO_PULL_UP);  // UART TX
+    pin_alt(GPIOA, LL_GPIO_PIN_3,  LL_GPIO_AF_7, LL_GPIO_PULL_UP);  // UART RX
 
     LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOB);
-
-    // SPI SCK
-    LL_GPIO_SetPinMode(GPIOB, LL_GPIO_PIN_3, LL_GPIO_MODE_ALTERNATE);
-    LL_GPIO_SetAFPin_0_7(GPIOB, LL_GPIO_PIN_3, LL_GPIO_AF_5);
-    LL_GPIO_SetPinSpeed(GPIOB, LL_GPIO_PIN_3, LL_GPIO_SPEED_FREQ_HIGH);
-    LL_GPIO_SetPinPull(GPIOB, LL_GPIO_PIN_3, LL_GPIO_PULL_DOWN);
-
-    // SPI MISO
-    LL_GPIO_SetPinMode(GPIOB, LL_GPIO_PIN_4, LL_GPIO_MODE_ALTERNATE);
-    LL_GPIO_SetAFPin_0_7(GPIOB, LL_GPIO_PIN_4, LL_GPIO_AF_5);
-    LL_GPIO_SetPinSpeed(GPIOB, LL_GPIO_PIN_4, LL_GPIO_SPEED_FREQ_HIGH);
-    LL_GPIO_SetPinPull(GPIOB, LL_GPIO_PIN_4, LL_GPIO_PULL_DOWN);
-    // SPI MOSI
-    LL_GPIO_SetPinMode(GPIOB, LL_GPIO_PIN_5, LL_GPIO_MODE_ALTERNATE);
-    LL_GPIO_SetAFPin_0_7(GPIOB, LL_GPIO_PIN_5, LL_GPIO_AF_5);
-    LL_GPIO_SetPinSpeed(GPIOB, LL_GPIO_PIN_5, LL_GPIO_SPEED_FREQ_HIGH);
-    LL_GPIO_SetPinPull(GPIOB, LL_GPIO_PIN_5, LL_GPIO_PULL_DOWN);
+    
+    pin_alt(GPIOB, LL_GPIO_PIN_3,  LL_GPIO_AF_5, LL_GPIO_PULL_NO);  // SPI SCK
+    pin_alt(GPIOB, LL_GPIO_PIN_4,  LL_GPIO_AF_5, LL_GPIO_PULL_NO);  // SPI MISO
+    pin_alt(GPIOB, LL_GPIO_PIN_5,  LL_GPIO_AF_5, LL_GPIO_PULL_NO);  // SPI MOSI
 #endif
 
 #ifdef stm32f7
@@ -111,27 +106,13 @@ void io_init()
 
     LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOD);
 
-    // UART TX
-    LL_GPIO_SetPinMode(GPIOD, LL_GPIO_PIN_8, LL_GPIO_MODE_ALTERNATE);
-    LL_GPIO_SetAFPin_8_15(GPIOD, LL_GPIO_PIN_8, LL_GPIO_AF_7);
-    LL_GPIO_SetPinSpeed(GPIOD, LL_GPIO_PIN_8, LL_GPIO_SPEED_FREQ_HIGH);
-    LL_GPIO_SetPinOutputType(GPIOD, LL_GPIO_PIN_8, LL_GPIO_OUTPUT_PUSHPULL);
-    LL_GPIO_SetPinPull(GPIOD, LL_GPIO_PIN_8, LL_GPIO_PULL_UP);
-
-    // UART RX
-    LL_GPIO_SetPinMode(GPIOD, LL_GPIO_PIN_9, LL_GPIO_MODE_ALTERNATE);
-    LL_GPIO_SetAFPin_8_15(GPIOD, LL_GPIO_PIN_9, LL_GPIO_AF_7);
-    LL_GPIO_SetPinSpeed(GPIOD, LL_GPIO_PIN_9, LL_GPIO_SPEED_FREQ_HIGH);
-    LL_GPIO_SetPinOutputType(GPIOD, LL_GPIO_PIN_9, LL_GPIO_OUTPUT_PUSHPULL);
-    LL_GPIO_SetPinPull(GPIOD, LL_GPIO_PIN_9, LL_GPIO_PULL_UP);
+    pin_alt(GPIOD, LL_GPIO_PIN_8,  LL_GPIO_AF_7, LL_GPIO_PULL_UP);  // UART TX
+    pin_alt(GPIOD, LL_GPIO_PIN_9,  LL_GPIO_AF_7, LL_GPIO_PULL_UP);  // UART RX
 #endif
 }
 
-void io_mode(uint8_t pin, uint8_t mode)
+void io_mode(pin_t pin, uint8_t mode)
 {
-    if (pin >= MAX_PINMAP)
-	error(ERR_INVALID_PIN);
-
     if (mode == IO_MODE_INPUT) {
 	LL_GPIO_SetPinMode(PINMAP[pin].port,
 			   PINMAP[pin].pin,
@@ -144,27 +125,18 @@ void io_mode(uint8_t pin, uint8_t mode)
     }
 }
 
-void io_set(uint8_t pin)
+void io_set(pin_t pin)
 {
-    if (pin >= MAX_PINMAP)
-	error(ERR_INVALID_PIN);
-
     LL_GPIO_SetOutputPin(PINMAP[pin].port, PINMAP[pin].pin);
 }
 
-void io_clear(uint8_t pin)
+void io_clear(pin_t pin)
 {
-    if (pin >= MAX_PINMAP)
-	error(ERR_INVALID_PIN);
-
     LL_GPIO_ResetOutputPin(PINMAP[pin].port, PINMAP[pin].pin);
 }
 
-uint8_t io_read(uint8_t pin)
+uint8_t io_read(pin_t pin)
 {
-    if (pin >= MAX_PINMAP)
-	error(ERR_INVALID_PIN);
-
     return LL_GPIO_IsInputPinSet(PINMAP[pin].port, PINMAP[pin].pin);
 }
 
@@ -181,6 +153,33 @@ uint8_t io_read(uint8_t pin)
 #ifdef stm32f7
 #define UART_PORT ((USART_TypeDef *) USART3_BASE)
 #endif
+
+//------------------------------------------------------------------------------
+USART_TypeDef *uart_get(uint8_t port)
+{
+    USART_TypeDef *ret = NULL;
+    
+    switch (port) {
+    case 1:
+	ret = USART1;
+	break;
+    case 2:
+	ret = USART2;
+	break;
+#ifdef stm32f7
+    case 3:
+	ret = USART3;
+	break;
+    case 4:
+	ret = UART4;
+	break;
+#endif
+    default:
+	error(ERR_UART_PORT);
+	break;
+    }
+    return ret;
+}
 
 //------------------------------------------------------------------------------
 void USART1_IRQHandler()
@@ -200,7 +199,7 @@ void USART1_IRQHandler()
 
 
 //------------------------------------------------------------------------------
-void uart_init()
+void uart_init(uint8_t port)
 {
     //uint32_t pclk;
     
@@ -245,13 +244,13 @@ void uart_init()
 }
 
 //------------------------------------------------------------------------------
-void uart_send(char ch)
+void uart_send(uint8_t port, char ch)
 {
     LL_USART_TransmitData8(UART_PORT, ch);
 }
 
 //------------------------------------------------------------------------------
-void uart_sends(char *buf)
+void uart_sends(uint8_t port, char *buf)
 {
     for (uint8_t i = 0; buf[i] != 0; i++) {
 	while (!LL_USART_IsActiveFlag_TXE(UART_PORT));
@@ -261,9 +260,9 @@ void uart_sends(char *buf)
 }
 
 //------------------------------------------------------------------------------
-void uart_send_nl()
+void uart_send_nl(uint8_t port)
 {
-    uart_send('\r');
+    uart_send(port, '\r');
     //uart_send('\n');
 }
 
@@ -301,6 +300,62 @@ void timer2_init()
     LL_TIM_GenerateEvent_UPDATE(TIM2);
 }
 
+//------------------------------------------------------------------------------
+SPI_TypeDef *spi_port(uint8_t port)
+{
+    SPI_TypeDef *ret = NULL;
+
+    switch (port) {
+    case 1:
+	ret = SPI1;
+	break;
+    case 2:
+	ret = SPI2;
+	break;
+    default:
+	error(ERR_SPI_PORT);
+	break;
+    }
+    return ret;
+}
+
+
+//------------------------------------------------------------------------------
+void spi_init(uint8_t port)
+{
+    SPI_TypeDef *spi = spi_port(port);
+
+    switch (port) {
+    case 1:
+	LL_APB1_GRP2_EnableClock(LL_APB1_GRP2_PERIPH_SPI1);
+	break;
+    case 2:
+	LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_SPI2);
+	break;
+    }
+
+    LL_SPI_Enable(spi);
+    LL_SPI_SetMode(spi, LL_SPI_MODE_MASTER);
+    LL_SPI_SetClockPhase(spi, LL_SPI_PHASE_1EDGE);
+    LL_SPI_SetClockPolarity(spi, LL_SPI_POLARITY_LOW);
+    LL_SPI_SetBaudRatePrescaler(spi, LL_SPI_BAUDRATEPRESCALER_DIV4);
+    LL_SPI_SetTransferBitOrder(spi, LL_SPI_MSB_FIRST);
+    LL_SPI_SetTransferDirection(spi, LL_SPI_FULL_DUPLEX);
+    LL_SPI_SetDataWidth(spi, LL_SPI_DATAWIDTH_16BIT);
+    LL_SPI_SetNSSMode(spi, LL_SPI_NSS_HARD_INPUT);
+    
+    LL_SPI_Enable(spi);
+}
+
+void spi_write(uint8_t port, uint16_t data)
+{
+    LL_SPI_TransmitData16(spi_port(port), data);
+}
+
+uint16_t spi_read(uint8_t port)
+{
+    return LL_SPI_ReceiveData16(spi_port(port));
+}
 
 //------------------------------------------------------------------------------
 /** Hard Fault exception

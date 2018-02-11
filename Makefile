@@ -59,6 +59,7 @@ OBJECTS += ../drivers/mysensor.o
 OBJECTS += ../drivers/outsens.o
 OBJECTS += ../drivers/ds1820.o
 OBJECTS += ../drivers/sump.o
+OBJECTS += ../drivers/rfm12b.o
 OBJECTS += lib/$(DEV_FAMILY)/$(DEV_FAMILY)xx_ll_utils.c
 
 INCLUDE_PATHS += -I.
@@ -134,7 +135,7 @@ size:
 clean:
 	rm $(PROJECT).bin $(PROJECT).elf *.o *.d ../drivers/*.o
 tags:
-	etags *.[ch] ../drivers/*.[ch]
+	etags *.[ch] ../drivers/*.[ch] lib/stm32f0/*.h lib/cmsis/stm32f0/*.h
 
 #flash:
 #	xcopy /Y $(PROJECT).bin e:

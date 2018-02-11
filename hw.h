@@ -37,10 +37,17 @@
 
 #include "hal.h"
 
+/** Event ids
+ */
 #define EV_TIMER2  0x01
 #define EV_UART_RX 0x02
 
+/** Error codes
+ */
 #define ERR_INVALID_PIN 0x01
+#define ERR_UART_PORT   0x02
+#define ERR_SPI_PORT    0x03
+#define ERR_HARD_FAULT  0x04
 
 
 extern uint32_t gEvents;
