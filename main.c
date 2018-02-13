@@ -4,23 +4,53 @@
 #include "outsens.h"
 #include "sump.h"
 #include "ds1820.h"
+#include "rfm12b.h"
+
+#define NULL (void*)0
+
+char gVersion[] = "V0.0.2\000";
 
 void     SystemClock_Config(void);
 
 #define DELAY 100
-#define UART  2
+#define UART  1
 uint32_t gEvents;
 uint8_t gState;
 uint8_t gCounter;
 
 #define TEMP_COUNT 3
 uint16_t temp[TEMP_COUNT];
+rfm12b rfm1;
+rfm12b rfm2;
+
+void cmdHelp();
+void cmdVersion();
+void cmdTest1();
+void cmdTest2();
+void state_change();
+
+typedef struct MenuItem {
+    char key;
+    char *description;
+    void (*func)();
+} menuitem_t;
+
+menuitem_t gMainMenu[] = {
+    {'h', "help", cmdHelp},
+    {'s', "state change", state_change},
+    {'v', "version", cmdVersion},
+    {'1', "test 1", cmdTest1},
+    {'2', "test 2", cmdTest2},
+    { 0,  NULL, NULL}
+};
 
 
 
 //------------------------------------------------------------------------------
 void state_change()
 {
+    rfm12b_test(&rfm1);
+    
     switch (gState) {
     case 0:
 	ds1820_measure(PIN_DS1820a);
@@ -42,27 +72,55 @@ void state_change()
 	gState = 0;
 }
 
+
+void cmdVersion()
+{
+    uart_sends(UART, gVersion);
+    uart_send_nl(UART);
+}
+
+void cmdHelp()
+{
+    uint8_t i;
+
+    for (i=0; gMainMenu[i].key != 0; i++) {
+	uart_send(UART, gMainMenu[i].key);
+	uart_send(UART, ' ');	
+	uart_sends(UART, gMainMenu[i].description);
+	uart_send_nl(UART);
+    }
+}
+
+void cmdTest1()
+{
+    char buffer[]="hello";
+    
+    rfm12b_send(&rfm1, (uint8_t*)buffer, 5);
+}
+
+void cmdTest2()
+{
+    rfm12b_test(&rfm1);
+}
+
 //------------------------------------------------------------------------------
 void command(uint8_t cmd)
 {
+    uint8_t i;
+    uint8_t found = 0;
     tgl_LED1;
-    
-    switch (cmd) {
-    case '1':
-	uart_sends(UART, "one");
-	uart_send_nl(UART);
-	break;
-    case '2':
-	uart_sends(UART, "two");
-	uart_send_nl(UART);
-	break;
-    case 't':
-	state_change();
-	break;
-    default:
+
+    for (i=0; gMainMenu[i].key != 0; i++) {
+	if (gMainMenu[i].key == cmd) {
+	    (*(gMainMenu[i].func))();
+	    found = 1;
+	    break;
+	}
+    }
+
+    if (!found) {
 	uart_sends(UART, "invalid commmand!");
 	uart_send_nl(UART);
-	break;
     }
 }
 
@@ -79,7 +137,9 @@ int main()
     timer2_init();
 
     ds1820_init(PIN_DS1820a);
-
+    rfm12b_init(&rfm1, 1, PIN_RFM12_SEL1, PIN_RFM12_IRQ1);
+    rfm12b_init(&rfm2, 2, PIN_RFM12_SEL2, PIN_RFM12_IRQ2);
+    
     outsens_init();
     //mysensor_init();
 
@@ -110,19 +170,34 @@ int main()
 
 	    gEvents &= ~(EV_TIMER2);
 	}
-	if (gEvents & EV_UART_RX) {
+	if (gEvents & EV_UART1_RX) {
 	    //LL_GPIO_TogglePin(GPIOC, LL_GPIO_PIN_8);
 
-	    //sump_handle(gUartRx);
-	    command(gUartRx);
+	    //sump_handle(gUartRx1);
+	    command(gUart1Rx);
 	    
-	    gEvents &= ~(EV_UART_RX);
+	    gEvents &= ~(EV_UART1_RX);
+	}
+	if (gEvents & EV_UART2_RX) {
+	    command(gUart2Rx);
+	    
+	    gEvents &= ~(EV_UART2_RX);
+	}
+	if (gEvents & EV_SPI1_RX) {
+	    //command(gSpi1Rx);
+	    
+	    gEvents &= ~(EV_SPI1_RX);
+	}
+	if (gEvents & EV_SPI2_RX) {
+	    //command(gSpi2Rx);
+	    
+	    gEvents &= ~(EV_SPI2_RX);
 	}
     }
 }
 
 //------------------------------------------------------------------------------
-void error(uint8_t code)
+void error(error_t code)
 {
     while (1) {
 	set_LED1;

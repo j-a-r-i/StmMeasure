@@ -40,7 +40,10 @@ typedef enum pin {
     PIN_DS1820a,
     PIN_DS1820b,
     PIN_DS1820c,
-    PIN_RFM12_SEL,
+    PIN_RFM12_SEL1,
+    PIN_RFM12_IRQ1,
+    PIN_RFM12_SEL2,
+    PIN_RFM12_IRQ2,
     PIN_MAX
 } pin_t;
 
@@ -60,6 +63,7 @@ typedef enum pin {
 extern void delay_us(uint16_t time);
 
 extern void io_init();
+extern void io_pin_init(pin_t pin, uint8_t mode);
 extern void io_mode(pin_t, uint8_t mode);
 extern void io_set(pin_t pin);
 extern void io_clear(pin_t pin);

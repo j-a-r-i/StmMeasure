@@ -39,21 +39,28 @@
 
 /** Event ids
  */
-#define EV_TIMER2  0x01
-#define EV_UART_RX 0x02
+#define EV_TIMER2   0x01
+#define EV_UART1_RX 0x02
+#define EV_UART2_RX 0x04
+#define EV_SPI1_RX  0x08
+#define EV_SPI2_RX  0x10
 
 /** Error codes
  */
-#define ERR_INVALID_PIN 0x01
-#define ERR_UART_PORT   0x02
-#define ERR_SPI_PORT    0x03
-#define ERR_HARD_FAULT  0x04
-
+typedef enum errors {
+    ERR_INVALID_PIN = 0x01,
+    ERR_UART_PORT,
+    ERR_SPI_PORT,
+    ERR_HARD_FAULT,
+} error_t;
 
 extern uint32_t gEvents;
-extern uint8_t  gUartRx;
+extern uint8_t  gUart1Rx;
+extern uint8_t  gUart2Rx;
+extern uint8_t  gSpi1Rx;
+extern uint8_t  gSpi2Rx;
 
-extern void error(uint8_t code);
+extern void error(error_t code);
 
 /*
 #include "stm32f4xx_ll_pwr.h"
