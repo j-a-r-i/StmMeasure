@@ -8,7 +8,7 @@
 
 #define NULL (void*)0
 
-char gVersion[] = "V0.0.2\000";
+char gVersion[] = "V0.0.3\r\n\000";
 
 void     SystemClock_Config(void);
 
@@ -49,7 +49,11 @@ menuitem_t gMainMenu[] = {
 //------------------------------------------------------------------------------
 void state_change()
 {
-    rfm12b_test(&rfm1);
+    #define BUF_SIZE 5
+    uint8_t buffer[] = { 'h', 'e', 'l', 'l', 'o' };
+
+    rfm12b_send(&rfm1, buffer, sizeof(buffer));
+    
     
     switch (gState) {
     case 0:
@@ -66,7 +70,6 @@ void state_change()
 	gCounter++;
 	break;
     }
-
     gState++;
     if (gState > 59)
 	gState = 0;
@@ -119,8 +122,7 @@ void command(uint8_t cmd)
     }
 
     if (!found) {
-	uart_sends(UART, "invalid commmand!");
-	uart_send_nl(UART);
+	uart_sends(UART, "invalid commmand!\r\n");
     }
 }
 
@@ -146,7 +148,7 @@ int main()
     temp[1] = 2;
     temp[2] = 3;
     
-    uart_sends(UART, "starting..\n");
+    uart_sends(UART, "starting..\r\n");
     //uart_sends(mysensor_present(1,1, S_TEMP));
 
 /*    while (1) {
@@ -161,7 +163,19 @@ int main()
 	for (i=0; i<1000; i++) {
 	    delay_us(1000);
 	}
-	}*/
+    }*/
+    /*while (1) {
+	rfm12b_test(&rfm1);
+	delay_us(00);
+    }*/
+    /*while (1) {
+	io_set(PIN_RFM12_SEL1);
+	io_set(PIN_LED1);
+	delay_us(2000);
+	io_clear(PIN_RFM12_SEL1);
+	io_clear(PIN_LED1);
+	delay_us(2000);
+    }*/
     
     while (1) {
 	if (gEvents & EV_TIMER2) {

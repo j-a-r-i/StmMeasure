@@ -10,10 +10,6 @@
 #define clr_LED2 LL_GPIO_ResetOutputPin(GPIOC, LL_GPIO_PIN_9)
 #define tgl_LED2 LL_GPIO_TogglePin(GPIOC, LL_GPIO_PIN_9)
 
-#define setRFM12_SEL LL_GPIO_SetOutputPin(GPIOA, LL_GPIO_PIN_4)
-#define clrRFM12_SEL LL_GPIO_ResetOutputPin(GPIOA, LL_GPIO_PIN_4)
-#define tglRFM12_SEL LL_GPIO_TogglePin(GPIOA, LL_GPIO_PIN_4)
-
 /* STM32F4
 #define set_LED1 LL_GPIO_SetOutputPin(GPIOD, LL_GPIO_PIN_13)
 #define clr_LED1 LL_GPIO_ResetOutputPin(GPIOD, LL_GPIO_PIN_13)
@@ -35,7 +31,7 @@
 */
 
 typedef enum pin {
-    PIN_LED1,
+    PIN_LED1 = 0,
     PIN_LED2,
     PIN_DS1820a,
     PIN_DS1820b,
@@ -46,13 +42,6 @@ typedef enum pin {
     PIN_RFM12_IRQ2,
     PIN_MAX
 } pin_t;
-
-#define PIN_LED1    0
-#define PIN_LED2    1
-#define PIN_DS1820a 2
-#define PIN_DS1820b 3
-#define PIN_DS1820c 4
-#define PIN_RFM12_SEL 5
 
 #define IO_MODE_INPUT  0
 #define IO_MODE_OUTPUT 1
