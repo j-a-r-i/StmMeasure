@@ -1,8 +1,8 @@
 
-
 PROJECT = meas
 DEV_CPU = 0
 PLACE=3
+
 
 ifeq ($(PLACE),1)
 	DIR_MBED = d:/blinky/mbed-os
@@ -24,54 +24,47 @@ ifeq ($(PLACE),3)
 endif
 
 ifeq ($(DEV_CPU),0)
-	DEV_FAMILY = stm32f0
-#	DEV_DEVICE = stm32f072
-#	DEV_FLASH = STM32F072RBTx
-	DEV_DEVICE = stm32f051
-	DEV_FLASH = STM32F051R8Tx
+#	DEV_DEVICE = 072
+#	DEV_FLASH  = 072RBTx
+	DEV_DEVICE = 051
+	DEV_FLASH  = 051R8Tx
 	DEV_FPU = 
-	NAME = STM32F0
 endif
 ifeq ($(DEV_CPU),4)
-	DEV_FAMILY = stm32f4
-	DEV_DEVICE = stm32f407
-	DEV_FLASH = STM32F407VGTx
+	DEV_DEVICE = 407
+	DEV_FLASH  = 407VGTx
 	DEV_FPU = -mfpu=fpv4-sp-d16 -mfloat-abi=softfp
-	NAME = STM32F4
 endif
 ifeq ($(DEV_CPU),7)
-	DEV_FAMILY = stm32f7
-	DEV_DEVICE = stm32f767
-	DEV_FLASH = STM32F767ZITx
+	DEV_DEVICE = 767
+	DEV_FLASH  = 767ZITx
 	DEV_FPU = -mfpu=fpv5-d16 -mfloat-abi=softfp
-	NAME = STM32F7
 endif
-
 
 
 OBJECTS += main.o
 OBJECTS += hal.o
-OBJECTS += $(DEV_FAMILY)xx_it.o
-OBJECTS += system_$(DEV_FAMILY)xx.o
-OBJECTS += startup_$(DEV_DEVICE)x8.o
+OBJECTS += stm32f$(DEV_CPU)xx_it.o
+OBJECTS += system_stm32f$(DEV_CPU)xx.o
+OBJECTS += startup_stm32f$(DEV_DEVICE)x8.o
 OBJECTS += ../drivers/buffer.o
 OBJECTS += ../drivers/mysensor.o
 OBJECTS += ../drivers/outsens.o
 OBJECTS += ../drivers/ds1820.o
 OBJECTS += ../drivers/sump.o
 OBJECTS += ../drivers/rfm12b.o
-OBJECTS += lib/$(DEV_FAMILY)/$(DEV_FAMILY)xx_ll_utils.c
+OBJECTS += ../lib/stm32f$(DEV_CPU)/stm32f$(DEV_CPU)xx_ll_utils.c
 
 INCLUDE_PATHS += -I.
 
 INCLUDE_PATHS += -I../drivers
-INCLUDE_PATHS += -Ilib/$(DEV_FAMILY)
-INCLUDE_PATHS += -Ilib/cmsis/$(DEV_FAMILY)
+INCLUDE_PATHS += -I../lib/stm32f$(DEV_CPU)
+INCLUDE_PATHS += -I../lib/cmsis/stm32f$(DEV_CPU)
 INCLUDE_PATHS += -I$(DIR_MBED)/cmsis
 INCLUDE_PATHS += -I$(DIR_MBED)/cmsis/TARGET_CORTEX_M
 INCLUDE_PATHS += -I$(DIR_MBED)/cmsis/TARGET_CORTEX_M/TOOLCHAIN_GCC
 
-LINKER_SCRIPT =  $(DEV_FLASH)_FLASH.ld
+LINKER_SCRIPT =  STM32F$(DEV_FLASH)_FLASH.ld
 
 
 FLAGS += -mcpu=cortex-m$(DEV_CPU)
@@ -92,7 +85,7 @@ COMMON_FLAGS += -MMD
 COMMON_FLAGS += -fno-delete-null-pointer-checks
 COMMON_FLAGS += -fomit-frame-pointer
 
-C_FLAGS += -D$(DEV_FAMILY)
+C_FLAGS += -Dstm32f$(DEV_CPU)
 
 ASM_FLAGS += -x
 ASM_FLAGS += assembler-with-cpp
@@ -124,10 +117,12 @@ SIZE    = $(TOOLPATH)-size
 ###############################################################################
 .PHONY: all lst size debug flash tags clean info ocd
 
-all: $(PROJECT).bin 
+all: info $(PROJECT).bin 
 
 info:
-	@echo $(NAME), $(DEV_FAMILY), $(DEV_FLASH)
+	@echo STM32F$(DEV_CPU)
+	@echo "DEV_FLASH  : $(DEV_FLASH)"
+	@echo ""
 
 size:
 	$(SIZE) $(PROJECT).elf
@@ -135,7 +130,7 @@ size:
 clean:
 	rm $(PROJECT).bin $(PROJECT).elf *.o *.d ../drivers/*.o
 tags:
-	etags *.[ch] ../drivers/*.[ch] lib/stm32f0/*.h lib/cmsis/stm32f0/*.h
+	etags *.[ch] ../drivers/*.[ch] ../lib/stm32f0/*.h ../lib/cmsis/stm32f0/*.h
 
 #flash:
 #	xcopy /Y $(PROJECT).bin e:
@@ -163,21 +158,21 @@ debug:
 #	$(OPENOCD) -s $(OPENOCD_SCRIPTS) -f board/st_nucleo_f7.cfg -c init -c "reset init"
 
 .s.o:
-	+@echo "Assemble: $(notdir $<)"
+	+@echo "AS $(notdir $<)"
 	@$(AS) -c $(ASM_FLAGS) $(INCLUDE_PATHS) -o $@ $<
 
 .c.o:
-	+@echo "Compile: $(notdir $<) "
-	$(CC) $(C_FLAGS) $(INCLUDE_PATHS) -o $@ $<
+	+@echo "CC $(notdir $<)"
+	@$(CC) $(C_FLAGS) $(INCLUDE_PATHS) -o $@ $<
 
 $(PROJECT).ld: $(LINKER_SCRIPT)
 	@$(PREPROC) $< -o $@
 
 $(PROJECT).elf: $(OBJECTS) $(PROJECT).ld
-	+@echo "link: $(notdir $@)"
-	$(LD) $(LD_FLAGS) -T $(PROJECT).ld $(LIBRARY_PATHS) $(INCLUDE_PATHS)  --output $@ $(OBJECTS) $(LIBRARIES) $(LD_SYS_LIBS)
+	+@echo "LN $(notdir $@)"
+	@$(LD) $(LD_FLAGS) -T $(PROJECT).ld $(LIBRARY_PATHS) $(INCLUDE_PATHS)  --output $@ $(OBJECTS) $(LIBRARIES) $(LD_SYS_LIBS)
 
 $(PROJECT).bin: $(PROJECT).elf
-	$(ELF2BIN) -O binary $< $@
-	+@echo "===== bin file ready to flash: $(OBJDIR)/$@ =====" 
+	+@echo "BN $<"
+	@$(ELF2BIN) -O binary $< $@
 
