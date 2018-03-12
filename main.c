@@ -129,18 +129,27 @@ void command(uint8_t cmd)
 //------------------------------------------------------------------------------
 int main()
 {
+    uint8_t irq2_state;
+    
     gEvents = 0;
     gState = 0;
-    
+    irq2_state = 0;
     SystemClock_Config();
 
     io_init();
     uart_init(UART);
     timer2_init();
 
+    uart_sends(UART, "starting..");
+
     ds1820_init(PIN_DS1820a);
     rfm12b_init(&rfm1, 1, PIN_RFM12_SEL1, PIN_RFM12_IRQ1);
+    rfm12b_tx(&rfm1, 1);
+    uart_sends(UART, "rf1..");
+    
     rfm12b_init(&rfm2, 2, PIN_RFM12_SEL2, PIN_RFM12_IRQ2);
+    rfm12b_tx(&rfm2, 0);
+    uart_sends(UART, "rf2");
     
     outsens_init();
     //mysensor_init();
@@ -148,7 +157,7 @@ int main()
     temp[1] = 2;
     temp[2] = 3;
     
-    uart_sends(UART, "starting..\r\n");
+    uart_sends(UART, "r\n");
     //uart_sends(mysensor_present(1,1, S_TEMP));
 
 /*    while (1) {
@@ -206,6 +215,16 @@ int main()
 	    //command(gSpi2Rx);
 	    
 	    gEvents &= ~(EV_SPI2_RX);
+	}
+	if ((irq2_state == 0) && (io_read(PIN_RFM12_IRQ2) == 0)) {
+	    uart_sends(UART, "irq2");
+	    irq2_state = 1;
+	}
+	else {
+	    if (irq2_state) {
+		uart_sends(UART, ".\r\n");
+	    }
+	    irq2_state = 0;
 	}
     }
 }

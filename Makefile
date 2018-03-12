@@ -164,7 +164,6 @@ debug:
 .c.o:
 	+@echo "CC $(notdir $<)"
 	@$(CC) $(C_FLAGS) $(INCLUDE_PATHS) -o $@ $<
-
 $(PROJECT).ld: $(LINKER_SCRIPT)
 	@$(PREPROC) $< -o $@
 
