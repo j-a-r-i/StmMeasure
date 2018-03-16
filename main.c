@@ -5,6 +5,8 @@
 #include "sump.h"
 #include "ds1820.h"
 #include "rfm12b.h"
+#include "test.h"
+#include "logging.h"
 
 #define NULL (void*)0
 
@@ -13,7 +15,7 @@ char gVersion[] = "V0.0.3\r\n\000";
 void     SystemClock_Config(void);
 
 #define DELAY 100
-#define UART  1
+
 uint32_t gEvents;
 uint8_t gState;
 uint8_t gCounter;
@@ -25,8 +27,6 @@ rfm12b rfm2;
 
 void cmdHelp();
 void cmdVersion();
-void cmdTest1();
-void cmdTest2();
 void state_change();
 
 typedef struct MenuItem {
@@ -36,11 +36,12 @@ typedef struct MenuItem {
 } menuitem_t;
 
 menuitem_t gMainMenu[] = {
-    {'h', "help", cmdHelp},
+    {'h', "help",         cmdHelp},
     {'s', "state change", state_change},
-    {'v', "version", cmdVersion},
-    {'1', "test 1", cmdTest1},
-    {'2', "test 2", cmdTest2},
+    {'v', "version",      cmdVersion},
+    {'1', "test RFM12 1", testRfm12_1},
+    {'2', "test RFM12 2", testRfm12_2},
+    {'3', "test LED",     testLed},
     { 0,  NULL, NULL}
 };
 
@@ -49,12 +50,8 @@ menuitem_t gMainMenu[] = {
 //------------------------------------------------------------------------------
 void state_change()
 {
-    #define BUF_SIZE 5
-    uint8_t buffer[] = { 'h', 'e', 'l', 'l', 'o' };
+    //uint8_t buffer[] = { 'h', 'e', 'l', 'l', 'o' };
 
-    rfm12b_send(&rfm1, buffer, sizeof(buffer));
-    
-    
     switch (gState) {
     case 0:
 	ds1820_measure(PIN_DS1820a);
@@ -69,9 +66,12 @@ void state_change()
 	uart_sends(UART, outsens_set(gCounter, temp, TEMP_COUNT));
 	gCounter++;
 	break;
+	//case 4:
+	//rfm12b_send(&rfm1, buffer, sizeof buffer);
+	
     }
     gState++;
-    if (gState > 59)
+    if (gState > 10)
 	gState = 0;
 }
 
@@ -86,24 +86,14 @@ void cmdHelp()
 {
     uint8_t i;
 
+    uart_sends(UART, "\r\nMenu:\r\n\n");
     for (i=0; gMainMenu[i].key != 0; i++) {
+	uart_send(UART, ' ');	
 	uart_send(UART, gMainMenu[i].key);
 	uart_send(UART, ' ');	
 	uart_sends(UART, gMainMenu[i].description);
 	uart_send_nl(UART);
     }
-}
-
-void cmdTest1()
-{
-    char buffer[]="hello";
-    
-    rfm12b_send(&rfm1, (uint8_t*)buffer, 5);
-}
-
-void cmdTest2()
-{
-    rfm12b_test(&rfm1);
 }
 
 //------------------------------------------------------------------------------
@@ -139,7 +129,8 @@ int main()
     io_init();
     uart_init(UART);
     timer2_init();
-
+    log_init(UART);
+    
     uart_sends(UART, "starting..");
 
     ds1820_init(PIN_DS1820a);
@@ -160,23 +151,6 @@ int main()
     uart_sends(UART, "r\n");
     //uart_sends(mysensor_present(1,1, S_TEMP));
 
-/*    while (1) {
-	uint16_t i;
-
-	io_set(PIN_LED1);
-	for (i=0; i<1000; i++) {
-	    delay_us(1000);
-	}
-
-	io_clear(PIN_LED1);
-	for (i=0; i<1000; i++) {
-	    delay_us(1000);
-	}
-    }*/
-    /*while (1) {
-	rfm12b_test(&rfm1);
-	delay_us(00);
-    }*/
     /*while (1) {
 	io_set(PIN_RFM12_SEL1);
 	io_set(PIN_LED1);
@@ -232,6 +206,8 @@ int main()
 //------------------------------------------------------------------------------
 void error(error_t code)
 {
+    uart_sends(UART, "ERROR!");
+    
     while (1) {
 	set_LED1;
 	set_LED2;

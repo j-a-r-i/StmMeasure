@@ -1,8 +1,6 @@
-
 PROJECT = meas
 DEV_CPU = 0
 PLACE=3
-
 
 ifeq ($(PLACE),1)
 	DIR_MBED = d:/blinky/mbed-os
@@ -44,6 +42,7 @@ endif
 
 OBJECTS += main.o
 OBJECTS += hal.o
+OBJECTS += test.o
 OBJECTS += stm32f$(DEV_CPU)xx_it.o
 OBJECTS += system_stm32f$(DEV_CPU)xx.o
 OBJECTS += startup_stm32f$(DEV_DEVICE)x8.o
@@ -53,16 +52,17 @@ OBJECTS += ../drivers/outsens.o
 OBJECTS += ../drivers/ds1820.o
 OBJECTS += ../drivers/sump.o
 OBJECTS += ../drivers/rfm12b.o
+OBJECTS += ../drivers/logging.o
 OBJECTS += ../lib/stm32f$(DEV_CPU)/stm32f$(DEV_CPU)xx_ll_utils.c
 
-INCLUDE_PATHS += -I.
+INC_PATH += -I.
 
-INCLUDE_PATHS += -I../drivers
-INCLUDE_PATHS += -I../lib/stm32f$(DEV_CPU)
-INCLUDE_PATHS += -I../lib/cmsis/stm32f$(DEV_CPU)
-INCLUDE_PATHS += -I$(DIR_MBED)/cmsis
-INCLUDE_PATHS += -I$(DIR_MBED)/cmsis/TARGET_CORTEX_M
-INCLUDE_PATHS += -I$(DIR_MBED)/cmsis/TARGET_CORTEX_M/TOOLCHAIN_GCC
+INC_PATH += -I../drivers
+INC_PATH += -I../lib/stm32f$(DEV_CPU)
+INC_PATH += -I../lib/cmsis/stm32f$(DEV_CPU)
+INC_PATH += -I$(DIR_MBED)/cmsis
+INC_PATH += -I$(DIR_MBED)/cmsis/TARGET_CORTEX_M
+INC_PATH += -I$(DIR_MBED)/cmsis/TARGET_CORTEX_M/TOOLCHAIN_GCC
 
 LINKER_SCRIPT =  STM32F$(DEV_FLASH)_FLASH.ld
 
@@ -149,7 +149,8 @@ flash:
 		-c "verify_image $(PROJECT).bin 0x08000000" \
 		-c "sleep 200" \
 		-c "reset halt" \
-		-c "shutdown"
+		-c "shutdown" \
+		-c "reset init"
 
 
 debug:
@@ -159,17 +160,18 @@ debug:
 
 .s.o:
 	+@echo "AS $(notdir $<)"
-	@$(AS) -c $(ASM_FLAGS) $(INCLUDE_PATHS) -o $@ $<
+	@$(AS) -c $(ASM_FLAGS) $(INC_PATH) -o $@ $<
 
 .c.o:
 	+@echo "CC $(notdir $<)"
-	@$(CC) $(C_FLAGS) $(INCLUDE_PATHS) -o $@ $<
+	@$(CC) $(C_FLAGS) $(INC_PATH) -o $@ $<
+
 $(PROJECT).ld: $(LINKER_SCRIPT)
 	@$(PREPROC) $< -o $@
 
 $(PROJECT).elf: $(OBJECTS) $(PROJECT).ld
 	+@echo "LN $(notdir $@)"
-	@$(LD) $(LD_FLAGS) -T $(PROJECT).ld $(LIBRARY_PATHS) $(INCLUDE_PATHS)  --output $@ $(OBJECTS) $(LIBRARIES) $(LD_SYS_LIBS)
+	@$(LD) $(LD_FLAGS) -T $(PROJECT).ld $(LIB_PATH) $(INC_PATH)  --output $@ $(OBJECTS) $(LIBRARIES) $(LD_SYS_LIBS)
 
 $(PROJECT).bin: $(PROJECT).elf
 	+@echo "BN $<"

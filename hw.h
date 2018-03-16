@@ -1,6 +1,8 @@
 #ifndef __HW_H
 #define __HW_H
 
+#define UART 1
+
 #ifdef stm32f4
 #include "stm32f4xx_ll_bus.h"
 #include "stm32f4xx_ll_rcc.h"
@@ -36,6 +38,7 @@
 #endif
 
 #include "hal.h"
+#include "rfm12b.h"
 
 /** Event ids
  */
@@ -53,6 +56,9 @@ typedef enum errors {
     ERR_SPI_PORT,
     ERR_HARD_FAULT,
 } error_t;
+
+extern rfm12b rfm1;
+extern rfm12b rfm2;
 
 extern uint32_t gEvents;
 extern uint8_t  gUart1Rx;
