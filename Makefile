@@ -2,6 +2,8 @@ PROJECT = meas
 DEV_CPU = 0
 PLACE=3
 
+BIN_DIR=bin
+
 ifeq ($(PLACE),1)
 	DIR_MBED = d:/blinky/mbed-os
 	TOOLPATH = d:/usr/gcc-arm/bin/arm-none-eabi
@@ -117,7 +119,7 @@ SIZE    = $(TOOLPATH)-size
 ###############################################################################
 .PHONY: all lst size debug flash tags clean info ocd
 
-all: info $(PROJECT).bin 
+all: info $(BIN_DIR)/$(PROJECT).bin 
 
 info:
 	@echo STM32F$(DEV_CPU)
@@ -128,7 +130,7 @@ size:
 	$(SIZE) $(PROJECT).elf
 
 clean:
-	rm $(PROJECT).bin $(PROJECT).elf *.o *.d ../drivers/*.o
+	rm $(BIN_DIR)/*.* *.o *.d ../drivers/*.o
 tags:
 	etags *.[ch] ../drivers/*.[ch] ../lib/stm32f0/*.h ../lib/cmsis/stm32f0/*.h
 
@@ -144,14 +146,13 @@ flash:
 		-c "reset init" \
 		-c "sleep 200" \
 		-c "wait_halt 2" \
-		-c "flash write_image erase $(PROJECT).bin 0x08000000" \
+		-c "flash write_image erase $(BIN_DIR)/$(PROJECT).bin 0x08000000" \
 		-c "sleep 200" \
-		-c "verify_image $(PROJECT).bin 0x08000000" \
+		-c "verify_image $(BIN_DIR)/$(PROJECT).bin 0x08000000" \
 		-c "sleep 200" \
 		-c "reset halt" \
 		-c "shutdown" \
-		-c "reset init"
-
+		-c "reset run"
 
 debug:
 	$(OPENOCD) -s $(OPENOCD_SCRIPTS) -f board/stm32f0discovery.cfg -c init -c "reset init"
@@ -169,11 +170,11 @@ debug:
 $(PROJECT).ld: $(LINKER_SCRIPT)
 	@$(PREPROC) $< -o $@
 
-$(PROJECT).elf: $(OBJECTS) $(PROJECT).ld
+$(BIN_DIR)/$(PROJECT).elf: $(OBJECTS) $(PROJECT).ld
 	+@echo "LN $(notdir $@)"
 	@$(LD) $(LD_FLAGS) -T $(PROJECT).ld $(LIB_PATH) $(INC_PATH)  --output $@ $(OBJECTS) $(LIBRARIES) $(LD_SYS_LIBS)
 
-$(PROJECT).bin: $(PROJECT).elf
+$(BIN_DIR)/$(PROJECT).bin: $(BIN_DIR)/$(PROJECT).elf
 	+@echo "BN $<"
 	@$(ELF2BIN) -O binary $< $@
 
