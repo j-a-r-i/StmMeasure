@@ -55,9 +55,11 @@ void testLed()
 {
     while (1) {	
 	io_set(PIN_LED1);
+	io_set(PIN_LED2);
 	longDelay(1000);
 	
 	io_clear(PIN_LED1);
+	io_clear(PIN_LED2);
 	longDelay(1000);
 
 	if (isTestEnd())

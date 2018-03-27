@@ -10,7 +10,7 @@
 
 #define NULL (void*)0
 
-char gVersion[] = "V0.0.3\r\n\000";
+char gVersion[] = "V0.0.4\r\n\000";
 
 void     SystemClock_Config(void);
 
@@ -25,8 +25,11 @@ uint16_t temp[TEMP_COUNT];
 rfm12b rfm1;
 rfm12b rfm2;
 
+ds1820_search_t search_data;
+
 void cmdHelp();
 void cmdVersion();
+void cmdScan();
 void state_change();
 
 typedef struct MenuItem {
@@ -39,6 +42,7 @@ menuitem_t gMainMenu[] = {
     {'h', "help",         cmdHelp},
     {'s', "state change", state_change},
     {'v', "version",      cmdVersion},
+    {'c', "OW scan",      cmdScan},
     {'1', "test RFM12 1", testRfm12_1},
     {'2', "test RFM12 2", testRfm12_2},
     {'3', "test LED",     testLed},
@@ -50,7 +54,7 @@ menuitem_t gMainMenu[] = {
 //------------------------------------------------------------------------------
 void state_change()
 {
-    //uint8_t buffer[] = { 'h', 'e', 'l', 'l', 'o' };
+    uint8_t buffer[] = { 'h', 'e', 'l', 'l', 'o' };
 
     switch (gState) {
     case 0:
@@ -66,9 +70,9 @@ void state_change()
 	uart_sends(UART, outsens_set(gCounter, temp, TEMP_COUNT));
 	gCounter++;
 	break;
-	//case 4:
-	//rfm12b_send(&rfm1, buffer, sizeof buffer);
-	
+    case 4:
+	rfm12b_send(&rfm1, buffer, sizeof buffer);
+	break;
     }
     gState++;
     if (gState > 10)
@@ -93,6 +97,35 @@ void cmdHelp()
 	uart_send(UART, ' ');	
 	uart_sends(UART, gMainMenu[i].description);
 	uart_send_nl(UART);
+    }
+}
+
+const char gHexDigits[] = { '0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F' };
+
+void uart_hex(uint8_t port, uint8_t val)
+{
+    uart_send(port, gHexDigits[(val >> 4) & 0x0F]);
+    uart_send(port, gHexDigits[val & 0x0F]);
+}
+
+void cmdScan()
+{
+    uint8_t i;
+
+    // reset the search
+    search_data.lastDiscrepancy = 0;
+    search_data.lastDeviceFlag = FALSE;
+    search_data.lastFamilyDiscrepancy = 0;
+    
+    while (ds1820_search(PIN_DS1820a, &search_data)) {
+
+	uart_sends(UART, "ROM_CODE: ");
+	for (i=0; i<8; i++) {
+	    uart_hex(UART, search_data.romNo[i]);
+	    if (i != 7)
+		uart_send(UART, ':');
+	}
+	uart_sends(UART, "\r\n");
     }
 }
 
@@ -163,7 +196,7 @@ int main()
     while (1) {
 	if (gEvents & EV_TIMER2) {
 	    tgl_LED2;
-	    state_change();
+	    //state_change();
 
 	    gEvents &= ~(EV_TIMER2);
 	}
@@ -211,11 +244,11 @@ void error(error_t code)
     while (1) {
 	set_LED1;
 	set_LED2;
-	LL_mDelay(200);
+	LL_mDelay(20);
 
 	clr_LED1;
 	clr_LED2;
-	LL_mDelay(200);
+	LL_mDelay(20);
     }
 }
 
