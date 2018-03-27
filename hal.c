@@ -277,8 +277,8 @@ void uart_init(uint8_t port)
     LL_USART_SetBaudRate(uart,
 			 SystemCoreClock/1,       // for stm32f0 1 others 2
 			 LL_USART_OVERSAMPLING_16,
-//			 9600);
-			 115200); 
+			 9600);
+//			 115200); 
 
     LL_USART_Enable(uart);
 
@@ -426,7 +426,7 @@ void spi_init(uint8_t port)
     LL_SPI_Enable(spi);
 }
 
-void spi_write(uint8_t port, uint16_t data)
+uint16_t spi_write(uint8_t port, uint16_t data)
 {
     SPI_TypeDef *spi = spi_port(port);
 
@@ -434,12 +434,8 @@ void spi_write(uint8_t port, uint16_t data)
 
     while (LL_SPI_IsActiveFlag_BSY(spi))
 	;
-    
-}
 
-uint16_t spi_read(uint8_t port)
-{
-    return LL_SPI_ReceiveData16(spi_port(port));
+    return LL_SPI_ReceiveData16(spi);    
 }
 
 //------------------------------------------------------------------------------
