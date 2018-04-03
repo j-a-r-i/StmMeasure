@@ -45,6 +45,7 @@ endif
 OBJECTS += main.o
 OBJECTS += hal.o
 OBJECTS += test.o
+OBJECTS += menu.o
 OBJECTS += stm32f$(DEV_CPU)xx_it.o
 OBJECTS += system_stm32f$(DEV_CPU)xx.o
 OBJECTS += startup_stm32f$(DEV_DEVICE)x8.o

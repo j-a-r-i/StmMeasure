@@ -7,10 +7,11 @@
 #include "rfm12b.h"
 #include "test.h"
 #include "logging.h"
+#include "menu.h"
 
 #define NULL (void*)0
 
-char gVersion[] = "V0.0.4\r\n\000";
+char gVersion[] = "V0.0.5\r\n\000";
 
 void     SystemClock_Config(void);
 
@@ -32,11 +33,6 @@ void cmdVersion();
 void cmdScan();
 void state_change();
 
-typedef struct MenuItem {
-    char key;
-    char *description;
-    void (*func)();
-} menuitem_t;
 
 menuitem_t gMainMenu[] = {
     {'h', "help",         cmdHelp},
@@ -88,16 +84,7 @@ void cmdVersion()
 
 void cmdHelp()
 {
-    uint8_t i;
-
-    uart_sends(UART, "\r\nMenu:\r\n\n");
-    for (i=0; gMainMenu[i].key != 0; i++) {
-	uart_send(UART, ' ');	
-	uart_send(UART, gMainMenu[i].key);
-	uart_send(UART, ' ');	
-	uart_sends(UART, gMainMenu[i].description);
-	uart_send_nl(UART);
-    }
+    menu_print(gMainMenu);
 }
 
 const char gHexDigits[] = { '0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F' };
@@ -134,7 +121,6 @@ void command(uint8_t cmd)
 {
     uint8_t i;
     uint8_t found = 0;
-    tgl_LED1;
 
     for (i=0; gMainMenu[i].key != 0; i++) {
 	if (gMainMenu[i].key == cmd) {
@@ -204,12 +190,12 @@ int main()
 	    //LL_GPIO_TogglePin(GPIOC, LL_GPIO_PIN_8);
 
 	    //sump_handle(gUartRx1);
-	    command(gUart1Rx);
+	    menu_select(gMainMenu, gUart1Rx);
 	    
 	    gEvents &= ~(EV_UART1_RX);
 	}
 	if (gEvents & EV_UART2_RX) {
-	    command(gUart2Rx);
+	    menu_select(gMainMenu, gUart2Rx);
 	    
 	    gEvents &= ~(EV_UART2_RX);
 	}
