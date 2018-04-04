@@ -55,6 +55,8 @@ typedef enum errors {
     ERR_UART_PORT,
     ERR_SPI_PORT,
     ERR_HARD_FAULT,
+    ERR_INVALID_MEAS,
+    ERR_INVALID_SCHE
 } error_t;
 
 extern rfm12b rfm1;

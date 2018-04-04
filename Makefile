@@ -45,7 +45,9 @@ endif
 OBJECTS += main.o
 OBJECTS += hal.o
 OBJECTS += test.o
-OBJECTS += menu.o
+OBJECTS += menu2.o
+OBJECTS += meas.o
+OBJECTS += scheduler.o
 OBJECTS += stm32f$(DEV_CPU)xx_it.o
 OBJECTS += system_stm32f$(DEV_CPU)xx.o
 OBJECTS += startup_stm32f$(DEV_DEVICE)x8.o
@@ -56,6 +58,7 @@ OBJECTS += ../drivers/ds1820.o
 OBJECTS += ../drivers/sump.o
 OBJECTS += ../drivers/rfm12b.o
 OBJECTS += ../drivers/logging.o
+OBJECTS += ../drivers/hal_common.o
 OBJECTS += ../lib/stm32f$(DEV_CPU)/stm32f$(DEV_CPU)xx_ll_utils.c
 
 INC_PATH += -I.

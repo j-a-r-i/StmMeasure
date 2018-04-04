@@ -7,11 +7,11 @@
 #include "rfm12b.h"
 #include "test.h"
 #include "logging.h"
-#include "menu.h"
+#include "menu2.h"
 
 #define NULL (void*)0
 
-char gVersion[] = "V0.0.5\r\n\000";
+char gVersion[] = "V0.0.6\r\n\000";
 
 void     SystemClock_Config(void);
 
@@ -27,25 +27,6 @@ rfm12b rfm1;
 rfm12b rfm2;
 
 ds1820_search_t search_data;
-
-void cmdHelp();
-void cmdVersion();
-void cmdScan();
-void state_change();
-
-
-menuitem_t gMainMenu[] = {
-    {'h', "help",         cmdHelp},
-    {'s', "state change", state_change},
-    {'v', "version",      cmdVersion},
-    {'c', "OW scan",      cmdScan},
-    {'1', "test RFM12 1", testRfm12_1},
-    {'2', "test RFM12 2", testRfm12_2},
-    {'3', "test LED",     testLed},
-    { 0,  NULL, NULL}
-};
-
-
 
 //------------------------------------------------------------------------------
 void state_change()
@@ -79,20 +60,7 @@ void state_change()
 void cmdVersion()
 {
     uart_sends(UART, gVersion);
-    uart_send_nl(UART);
-}
-
-void cmdHelp()
-{
-    menu_print(gMainMenu);
-}
-
-const char gHexDigits[] = { '0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F' };
-
-void uart_hex(uint8_t port, uint8_t val)
-{
-    uart_send(port, gHexDigits[(val >> 4) & 0x0F]);
-    uart_send(port, gHexDigits[val & 0x0F]);
+    uart_nl(UART);
 }
 
 void cmdScan()
@@ -108,7 +76,7 @@ void cmdScan()
 
 	uart_sends(UART, "ROM_CODE: ");
 	for (i=0; i<8; i++) {
-	    uart_hex(UART, search_data.romNo[i]);
+	    uart_hex8(UART, search_data.romNo[i]);
 	    if (i != 7)
 		uart_send(UART, ':');
 	}
@@ -117,28 +85,10 @@ void cmdScan()
 }
 
 //------------------------------------------------------------------------------
-void command(uint8_t cmd)
-{
-    uint8_t i;
-    uint8_t found = 0;
-
-    for (i=0; gMainMenu[i].key != 0; i++) {
-	if (gMainMenu[i].key == cmd) {
-	    (*(gMainMenu[i].func))();
-	    found = 1;
-	    break;
-	}
-    }
-
-    if (!found) {
-	uart_sends(UART, "invalid commmand!\r\n");
-    }
-}
-
-//------------------------------------------------------------------------------
 int main()
 {
     uint8_t irq2_state;
+    context_t context;
     
     gEvents = 0;
     gState = 0;
@@ -178,6 +128,11 @@ int main()
 	io_clear(PIN_LED1);
 	delay_us(2000);
     }*/
+
+    context.state = menu_root;
+    context.action = NULL;
+
+    (*(context.state))(EVENT_PROMPT, &context);
     
     while (1) {
 	if (gEvents & EV_TIMER2) {
@@ -190,12 +145,17 @@ int main()
 	    //LL_GPIO_TogglePin(GPIOC, LL_GPIO_PIN_8);
 
 	    //sump_handle(gUartRx1);
-	    menu_select(gMainMenu, gUart1Rx);
+	    //menu_select(gMainMenu, gUart1Rx);
+	    (*(context.state))(gUart1Rx, &context);
+	    if (gUart1Rx == EVENT_HELP) {
+		uart_nl(UART);
+		(*(context.state))(EVENT_PROMPT, &context);
+	    }
 	    
 	    gEvents &= ~(EV_UART1_RX);
 	}
 	if (gEvents & EV_UART2_RX) {
-	    menu_select(gMainMenu, gUart2Rx);
+	    //menu_select(gMainMenu, gUart2Rx);
 	    
 	    gEvents &= ~(EV_UART2_RX);
 	}
