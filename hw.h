@@ -1,5 +1,4 @@
-#ifndef __HW_H
-#define __HW_H
+#pragma once
 
 #define UART 1
 
@@ -8,10 +7,8 @@
 #include "stm32f4xx_ll_rcc.h"
 #include "stm32f4xx_ll_system.h"
 #include "stm32f4xx_ll_gpio.h"
-#include "stm32f4xx_ll_usart.h"
 #include "stm32f4xx_ll_spi.h"
 #include "stm32f4xx_ll_utils.h"
-#include "stm32f4xx_ll_tim.h"
 #endif
 
 #ifdef stm32f7
@@ -19,10 +16,8 @@
 #include "stm32f7xx_ll_rcc.h"
 #include "stm32f7xx_ll_system.h"
 #include "stm32f7xx_ll_gpio.h"
-#include "stm32f7xx_ll_usart.h"
 #include "stm32f7xx_ll_spi.h"
 #include "stm32f7xx_ll_utils.h"
-#include "stm32f7xx_ll_tim.h"
 #endif
 
 #ifdef stm32f0
@@ -30,15 +25,16 @@
 #include "stm32f0xx_ll_rcc.h"
 #include "stm32f0xx_ll_system.h"
 #include "stm32f0xx_ll_gpio.h"
-#include "stm32f0xx_ll_usart.h"
 #include "stm32f0xx_ll_spi.h"
 #include "stm32f0xx_ll_utils.h"
-#include "stm32f0xx_ll_tim.h"
 #include "stm32f0xx_ll_cortex.h"
 #endif
 
+#include <stdint.h>
 #include "hal.h"
 #include "rfm12b.h"
+
+#define NULL (void*)0
 
 /** Event ids
  */
@@ -69,6 +65,7 @@ extern uint8_t  gSpi1Rx;
 extern uint8_t  gSpi2Rx;
 
 extern void error(error_t code);
+extern void show_version();
 
 /*
 #include "stm32f4xx_ll_pwr.h"
@@ -86,5 +83,3 @@ extern void error(error_t code);
 #include "stm32f4xx_ll_rng.h"
 #include "stm32f4xx_ll_lptim.h"
 */
-
-#endif

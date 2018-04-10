@@ -59,6 +59,8 @@ OBJECTS += ../drivers/sump.o
 OBJECTS += ../drivers/rfm12b.o
 OBJECTS += ../drivers/logging.o
 OBJECTS += ../drivers/hal_common.o
+OBJECTS += ../drivers/stm32_uart.o
+OBJECTS += ../drivers/stm32_timer.o
 OBJECTS += ../lib/stm32f$(DEV_CPU)/stm32f$(DEV_CPU)xx_ll_utils.c
 
 INC_PATH += -I.
