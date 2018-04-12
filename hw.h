@@ -33,6 +33,7 @@
 #include <stdint.h>
 #include "hal.h"
 #include "rfm12b.h"
+#include "buffer.h"
 
 #define NULL (void*)0
 
@@ -52,8 +53,19 @@ typedef enum errors {
     ERR_SPI_PORT,
     ERR_HARD_FAULT,
     ERR_INVALID_MEAS,
-    ERR_INVALID_SCHE
+    ERR_INVALID_SCHE,
+    ERR_BUFFER_OVERFLOW,
+    ERR_ARG_COUNT,
+    ERR_INVALID_COMMAND,
+    ERR_SYNTAX,
+    ERR_ARGUMENT
 } error_t;
+
+/** Function pointer for multiline printing,
+ *  when there is more printing that buffer_t
+ *  can hold.
+ */
+typedef uint8_t (*func_mline)(uint8_t timer, buffer_t *buf);
 
 extern rfm12b rfm1;
 extern rfm12b rfm2;
@@ -63,6 +75,7 @@ extern uint8_t  gUart1Rx;
 extern uint8_t  gUart2Rx;
 extern uint8_t  gSpi1Rx;
 extern uint8_t  gSpi2Rx;
+extern func_mline gFuncMLine;
 
 extern void error(error_t code);
 extern void show_version();
