@@ -1,5 +1,7 @@
 #pragma once
 
+#include "buffer.h"
+
 typedef struct {
     uint8_t wday:3;
     uint8_t hour:5;
@@ -31,7 +33,7 @@ typedef struct {
 #define MAX_SCHEDULE 10
 
 
-extern void sche_show();
+extern uint8_t sche_show(uint8_t timer, buffer_t *buf);
 extern void sche_set_start(uint8_t timer, uint8_t hour, uint8_t min);
 extern void sche_set_stop(uint8_t timer, uint8_t hour, uint8_t min);
 						  

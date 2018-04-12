@@ -1,23 +1,39 @@
 #include "hw.h"
 #include "meas.h"
+#include "buffer.h"
 
 meas_t gMeasureTable[MAX_MEASURE];
 
-void meas_show()
+//------------------------------------------------------------------------------
+/** Print out measure table entry.
+ *  meas variable can be 0 .. (MAX_MEASURE - 1)
+ *  @param first  is first entry to print
+ *  @param buf    buffer where entry info is filled
+ *  @return       is this last entry
+ */
+uint8_t meas_show(uint8_t first, buffer_t *buf)
 {
-    uint8_t i;
+    static uint8_t meas = 0;
 
-    uart_nl(UART);
-    for (i=0; i < MAX_MEASURE; i++) {
-	uart_send( UART, 'a' + i);
-	uart_send( UART, ' ');
-	uart_hex16(UART, gMeasureTable[i].value);
-	uart_send( UART, ' ');
-	uart_hex16(UART, gMeasureTable[i].highLimit);
-	uart_send( UART, ' ');
-	uart_hex16(UART, gMeasureTable[i].lowLimit);
-	uart_nl(UART);
+    if (first)
+	meas = 0;
+    else
+	meas++;
+
+    if (meas >= MAX_MEASURE) {
+	buffer_str(buf, "overflow");
+	return 1;
     }
+    
+    buffer_ch(   buf, 'a' + meas);
+    buffer_ch(   buf, ' ');
+    buffer_hex16(buf, gMeasureTable[meas].value);
+    buffer_ch(   buf, ' ');
+    buffer_hex16(buf, gMeasureTable[meas].highLimit);
+    buffer_ch(   buf, ' ');
+    buffer_hex16(buf, gMeasureTable[meas].lowLimit);
+
+    return meas == (MAX_MEASURE - 1);
 }
 		
 void meas_set_high_limit(uint8_t meas, uint16_t val)
