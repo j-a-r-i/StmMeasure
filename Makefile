@@ -42,29 +42,31 @@ ifeq ($(DEV_CPU),7)
 endif
 
 
-OBJECTS += main.o
-OBJECTS += hal.o
-OBJECTS += test.o
-OBJECTS += menu2.o
-OBJECTS += meas.o
-OBJECTS += scheduler.o
-OBJECTS += stm32f$(DEV_CPU)xx_it.o
-OBJECTS += system_stm32f$(DEV_CPU)xx.o
-OBJECTS += startup_stm32f$(DEV_DEVICE)x8.o
-OBJECTS += ../drivers/buffer.o
-OBJECTS += ../drivers/mysensor.o
-OBJECTS += ../drivers/outsens.o
-OBJECTS += ../drivers/ds1820.o
-OBJECTS += ../drivers/sump.o
-OBJECTS += ../drivers/rfm12b.o
-OBJECTS += ../drivers/logging.o
-OBJECTS += ../drivers/hal_common.o
-OBJECTS += ../drivers/stm32_uart.o
-OBJECTS += ../drivers/stm32_timer.o
+OBJECTS += $(BIN_DIR)/main.o
+OBJECTS += $(BIN_DIR)/hal.o
+OBJECTS += $(BIN_DIR)/test.o
+#OBJECTS += $(BIN_DIR)/menu2.o
+OBJECTS += $(BIN_DIR)/cli.o
+OBJECTS += $(BIN_DIR)/meas.o
+OBJECTS += $(BIN_DIR)/scheduler.o
+OBJECTS += $(BIN_DIR)/stm32f$(DEV_CPU)xx_it.o
+OBJECTS += $(BIN_DIR)/system_stm32f$(DEV_CPU)xx.o
+OBJECTS += $(BIN_DIR)/startup_stm32f$(DEV_DEVICE)x8.o
+OBJECTS += $(BIN_DIR)/buffer.o
+OBJECTS += $(BIN_DIR)/mysensor.o
+OBJECTS += $(BIN_DIR)/outsens.o
+OBJECTS += $(BIN_DIR)/ds1820.o
+OBJECTS += $(BIN_DIR)/sump.o
+OBJECTS += $(BIN_DIR)/rfm12b.o
+OBJECTS += $(BIN_DIR)/logging.o
+OBJECTS += $(BIN_DIR)/hal_common.o
+OBJECTS += $(BIN_DIR)/stm32_uart.o
+OBJECTS += $(BIN_DIR)/stm32_timer.o
 OBJECTS += ../lib/stm32f$(DEV_CPU)/stm32f$(DEV_CPU)xx_ll_utils.c
 
-INC_PATH += -I.
+vpath %.c . ../drivers/
 
+INC_PATH += -I.
 INC_PATH += -I../drivers
 INC_PATH += -I../lib/stm32f$(DEV_CPU)
 INC_PATH += -I../lib/cmsis/stm32f$(DEV_CPU)
@@ -72,7 +74,7 @@ INC_PATH += -I$(DIR_MBED)/cmsis
 INC_PATH += -I$(DIR_MBED)/cmsis/TARGET_CORTEX_M
 INC_PATH += -I$(DIR_MBED)/cmsis/TARGET_CORTEX_M/TOOLCHAIN_GCC
 
-LINKER_SCRIPT =  STM32F$(DEV_FLASH)_FLASH.ld
+LINKER_SCRIPT =  ../lib/STM32F$(DEV_FLASH)_FLASH.ld
 
 
 FLAGS += -mcpu=cortex-m$(DEV_CPU)
@@ -116,9 +118,8 @@ LD_FLAGS += -Wl,-n
 
 AS      = $(TOOLPATH)-gcc -x assembler-with-cppd -c $(COMMON_FLAGS) -O0 -g3 $(FLAGS)
 CC      = $(TOOLPATH)-gcc -std=gnu99 -c $(COMMON_FLAGS) -O0 -g3 $(FLAGS)
-CPP     = $(TOOLPATH)-g++ -std=gnu++98 -fno-rtti -Wvla -c $(COMMON_FLAGS) -O0 -g3 $(FLAGS)
 LD      = $(TOOLPATH)-gcc $(LD_FLAGS)  $(FLAGS)
-ELF2BIN = $(TOOLPATH)-objcopy
+OBJCOPY = $(TOOLPATH)-objcopy
 PREPROC = $(TOOLPATH)-cpp -E -P $(LD_FLAGS) $(FLAGS)
 SIZE    = $(TOOLPATH)-size
 
@@ -165,22 +166,19 @@ debug:
 #	$(OPENOCD) -s $(OPENOCD_SCRIPTS) -f board/stm32f4discovery.cfg -c init -c "reset init"
 #	$(OPENOCD) -s $(OPENOCD_SCRIPTS) -f board/st_nucleo_f7.cfg -c init -c "reset init"
 
-.s.o:
-	+@echo "AS $(notdir $<)"
-	@$(AS) -c $(ASM_FLAGS) $(INC_PATH) -o $@ $<
-
-.c.o:
+$(BIN_DIR)/%.o: %.c | $(BIN_DIR)
 	+@echo "CC $(notdir $<)"
 	@$(CC) $(C_FLAGS) $(INC_PATH) -o $@ $<
 
-$(PROJECT).ld: $(LINKER_SCRIPT)
-	@$(PREPROC) $< -o $@
+$(BIN_DIR)/%.o: %.s | $(BIN_DIR)
+	+@echo "AS $(notdir $<)"
+	@$(AS) -c $(ASM_FLAGS) $(INC_PATH) -o $@ $<
 
-$(BIN_DIR)/$(PROJECT).elf: $(OBJECTS) $(PROJECT).ld
+$(BIN_DIR)/$(PROJECT).elf: $(OBJECTS) $(LINKER_SCRIPT)
 	+@echo "LN $(notdir $@)"
-	@$(LD) $(LD_FLAGS) -T $(PROJECT).ld $(LIB_PATH) $(INC_PATH)  --output $@ $(OBJECTS) $(LIBRARIES) $(LD_SYS_LIBS)
+	@$(LD) $(LD_FLAGS) -T$(LINKER_SCRIPT) $(LIB_PATH) $(INC_PATH)  --output $@ $(OBJECTS) $(LIBRARIES) $(LD_SYS_LIBS)
 
 $(BIN_DIR)/$(PROJECT).bin: $(BIN_DIR)/$(PROJECT).elf
 	+@echo "BN $<"
-	@$(ELF2BIN) -O binary $< $@
+	@$(OBJCOPY) -O binary $< $@
 
