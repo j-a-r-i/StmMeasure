@@ -7,7 +7,9 @@
 #include "rfm12b.h"
 #include "test.h"
 #include "logging.h"
-#include "menu2.h"
+//#include "menu2.h"
+#include "meas.h"
+#include "cli.h"
 
 #define NULL (void*)0
 
@@ -16,10 +18,14 @@ char gVersion[] = "V0.0.6\r\n\000";
 void     SystemClock_Config(void);
 
 #define DELAY 100
+#define KEY_ENTER 10
+#define KEY_BACKSP 127
 
 uint32_t gEvents;
 uint8_t gState;
 uint8_t gCounter;
+func_mline gFuncMLine;
+buffer_t buf;
 
 #define TEMP_COUNT 3
 uint16_t temp[TEMP_COUNT];
@@ -57,8 +63,9 @@ void state_change()
 }
 
 
-void cmdVersion()
+void show_version()
 {
+    uart_nl(UART);
     uart_sends(UART, gVersion);
     uart_nl(UART);
 }
@@ -66,33 +73,47 @@ void cmdVersion()
 void cmdScan()
 {
     uint8_t i;
+    uint8_t device;
 
     // reset the search
     search_data.lastDiscrepancy = 0;
     search_data.lastDeviceFlag = FALSE;
     search_data.lastFamilyDiscrepancy = 0;
+
+    device = 0;
     
-    while (ds1820_search(PIN_DS1820a, &search_data)) {
+    while (ds1820_search(PIN_DS1820a, &search_data,
+			 gMeasureTable[device].romCode)) {
 
 	uart_sends(UART, "ROM_CODE: ");
-	for (i=0; i<8; i++) {
-	    uart_hex8(UART, search_data.romNo[i]);
-	    if (i != 7)
+	for (i = 0; i < DS1820_ROM_SIZE; i++) {
+	    uart_hex8(UART, gMeasureTable[device].romCode[i]);
+	    if (i != (DS1820_ROM_SIZE - 1))
 		uart_send(UART, ':');
 	}
-	uart_sends(UART, "\r\n");
+	uart_nl(UART);
+	device++;
     }
+}
+
+void show_prompt()
+{
+    uart_send(UART, '>');
 }
 
 //------------------------------------------------------------------------------
 int main()
 {
     uint8_t irq2_state;
-    context_t context;
+    buffer_t inBuffer;
+//    context_t context;
     
     gEvents = 0;
     gState = 0;
+    gFuncMLine = NULL;
     irq2_state = 0;
+    buffer_clear(&inBuffer);
+    
     SystemClock_Config();
 
     io_init();
@@ -129,10 +150,9 @@ int main()
 	delay_us(2000);
     }*/
 
-    context.state = menu_root;
-    context.action = NULL;
-
-    (*(context.state))(EVENT_PROMPT, &context);
+//    context.state = menu_root;
+//    context.action = NULL;
+//    (*(context.state))(EVENT_PROMPT, &context);
     
     while (1) {
 	if (gEvents & EV_TIMER2) {
@@ -146,10 +166,24 @@ int main()
 
 	    //sump_handle(gUartRx1);
 	    //menu_select(gMainMenu, gUart1Rx);
-	    (*(context.state))(gUart1Rx, &context);
+	    /*(*(context.state))(gUart1Rx, &context);
 	    if (gUart1Rx == EVENT_HELP) {
 		uart_nl(UART);
 		(*(context.state))(EVENT_PROMPT, &context);
+	    }*/
+	    switch (gUart1Rx) {
+	    case KEY_ENTER:
+		cli_execute(&inBuffer);
+		if (gFuncMLine == 0)
+		    show_prompt();
+		break;
+	    case KEY_BACKSP:
+		buffer_remove(&inBuffer);
+		uart_send(UART, gUart1Rx);
+		break;
+	    default:
+		buffer_ch(&inBuffer, gUart1Rx);
+		uart_send(UART, gUart1Rx);
 	    }
 	    
 	    gEvents &= ~(EV_UART1_RX);
@@ -185,7 +219,12 @@ int main()
 //------------------------------------------------------------------------------
 void error(error_t code)
 {
-    uart_sends(UART, "ERROR!");
+    buffer_clear(&buf);
+    buffer_str(  &buf, "ERR:");
+    buffer_hex8( &buf, code);
+    buffer_nl(   &buf);
+
+    uart_send(UART, &buf);
     
     while (1) {
 	set_LED1;
@@ -260,9 +299,11 @@ void SystemClock_Config(void)
 #ifdef  USE_FULL_ASSERT
 void assert_failed(uint8_t *file, uint32_t line)
 {
-    uart_sends("ASSERT ERROR in ");
-    uart_sends(file);
-    uart_send_nl();
+    buffer_clear(&buf);
+    buffer_str(  &buf, "ASSERT ERROR in ");
+    buffer_str(  &buf, file);
+    buffer_nl(   &buf);
+    uart_send(UART, &buf);
 
     while (1);
 }
