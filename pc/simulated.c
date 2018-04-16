@@ -1,9 +1,8 @@
 #include "hw.h"
 #include "buffer.h"
 #include "cli.h"
+#include "event.h"
 
-uint32_t gEvents;
-uint8_t  gUart1Rx;
 func_mline gFuncMLine;
 
 extern void event_check();
@@ -57,6 +56,56 @@ void show_prompt()
     uart_send(UART, '>');
 }
 
+
+//------------------------------------------------------------------------------
+void on_uart_rx(uint8_t ch)
+{
+    switch (ch) {
+    case KEY_ENTER:
+	cli_execute(&inBuffer);
+	if (gFuncMLine == 0)
+	    show_prompt();
+	break;
+    case KEY_BACKSP:
+	buffer_remove(&inBuffer);
+	uart_send(UART, ch);
+	break;
+    default:
+	buffer_ch(&inBuffer, gUart1Rx);
+	uart_send(UART, ch);
+    }
+}
+
+void on_uart_tx(uint8_t ch)
+{
+    if (gFuncMLine != NULL) {
+	buffer_clear(&buf);
+	last = (*gFuncMLine)(0, &buf);
+	buffer_nl(&buf);
+	buffer_print(&buf);
+	if (last) {
+	    show_prompt();
+	    gFuncMLine = NULL;
+	}
+    }
+}
+
+void on_null(uint8_t ch)
+{
+}
+
+event_t gEvents2Table[] = {
+    [EV_TIMER2]   = { 0, on_null },
+    [EV_UART1_RX] = { 0, on_uart_rx },
+    [EV_UART1_TX] = { 0, on_uart_tx },
+    [EV_UART2_RX] = { 0, on_null },
+    [EV_UART2_TX] = { 0, on_null },
+    [EV_USER1]    = { 0, on_null },
+    [EV_USER2]    = { 0, on_null },
+};
+
+ 
+
 //------------------------------------------------------------------------------
 void main(int argc, char **argv)
 {
@@ -65,43 +114,13 @@ void main(int argc, char **argv)
 
     gFuncMLine = NULL;
 
+    event_init();
     buffer_clear(&inBuffer);
     show_prompt();
     
     while (1) {
 	event_check();
 
-	if (gEvents & EV_UART1_RX) {
-	    switch (gUart1Rx) {
-	    case KEY_ENTER:
-		cli_execute(&inBuffer);
-		if (gFuncMLine == 0)
-		    show_prompt();
-		break;
-	    case KEY_BACKSP:
-		buffer_remove(&inBuffer);
-		uart_send(UART, gUart1Rx);
-		break;
-	    default:
-		buffer_ch(&inBuffer, gUart1Rx);
-		uart_send(UART, gUart1Rx);
-	    }
-	    gEvents &= ~(EV_UART1_RX);
-	}
-
-	if (gEvents & EV_UART1_TX) {
-	    gEvents &= ~(EV_UART1_TX);
-	    
-	    if (gFuncMLine != NULL) {
-		buffer_clear(&buf);
-		last = (*gFuncMLine)(0, &buf);
-		buffer_nl(&buf);
-		buffer_print(&buf);
-		if (last) {
-		    show_prompt();
-		    gFuncMLine = NULL;
-		}
-	    }
-	}
+	event_handle();
     }
 }

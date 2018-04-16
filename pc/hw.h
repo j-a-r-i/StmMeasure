@@ -8,11 +8,6 @@
 #include "hal.h"
 #include "buffer.h"
 
-/** Event ids
- */
-#define EV_UART1_RX 0x02
-#define EV_UART1_TX 0x04
-
 /** Error codes
  */
 typedef enum errors {

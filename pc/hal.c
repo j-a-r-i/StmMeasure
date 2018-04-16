@@ -2,6 +2,7 @@
 #include "hal.h"
 #include <termios.h>
 #include "buffer.h"
+#include "event.h"
 
 //------------------------------------------------------------------------------
 void buffer_print(buffer_t *buf)
@@ -14,7 +15,7 @@ void buffer_print(buffer_t *buf)
     }
     buffer_clear(buf);
 
-    gEvents |= EV_UART1_TX;
+    EVENT_SET(EV_UART1_TX, 0);
 }
 
 //------------------------------------------------------------------------------
@@ -61,7 +62,6 @@ void event_check()
     tio.c_cc[VTIME] = tmp2;
 
     if (ch != 0xFF) {
-	gUart1Rx = ch;
-	gEvents |= EV_UART1_RX;
+	EVENT_SET(EV_UART1_RX, ch);
     }
 } 
