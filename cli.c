@@ -54,14 +54,14 @@ void cli_execute(buffer_t *buf)
 	if (cmd == gCommands[i].cmd) {
 	    (*gCommands[i].func)(buf, &outBuffer);
 	    buffer_nl(&outBuffer);
-	    buffer_print(&outBuffer);
+	    uart_print(UART, &outBuffer);
 	    found = 1;
 	    break;
 	}
     }
     if (!found) {
 	error(ERR_INVALID_COMMAND);
-	buffer_print(buf);
+	uart_print(UART, buf);
     }
     buffer_clear(buf);
 }

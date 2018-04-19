@@ -39,11 +39,13 @@
 
 /** Event ids
  */
-#define EV_TIMER2   0x01
-#define EV_UART1_RX 0x02
-#define EV_UART2_RX 0x04
-#define EV_SPI1_RX  0x08
-#define EV_SPI2_RX  0x10
+#define EV_TIMER2   0x0001
+#define EV_UART1_RX 0x0002
+#define EV_UART1_TX 0x0004
+#define EV_UART2_RX 0x0008
+#define EV_UART2_TX 0x0010
+#define EV_SPI1_RX  0x0020
+#define EV_SPI2_RX  0x0040
 
 /** Error codes
  */

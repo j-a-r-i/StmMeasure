@@ -13,7 +13,7 @@
 
 #define NULL (void*)0
 
-char gVersion[] = "V0.0.6\r\n\000";
+char gVersion[] = "\nV0.0.7\n\000";
 
 void     SystemClock_Config(void);
 
@@ -65,9 +65,7 @@ void state_change()
 
 void show_version()
 {
-    uart_nl(UART);
     uart_sends(UART, gVersion);
-    uart_nl(UART);
 }
 
 void cmdScan()
@@ -91,7 +89,7 @@ void cmdScan()
 	    if (i != (DS1820_ROM_SIZE - 1))
 		uart_send(UART, ':');
 	}
-	uart_nl(UART);
+	uart_send(UART, '\n');
 	device++;
     }
 }
@@ -224,7 +222,7 @@ void error(error_t code)
     buffer_hex8( &buf, code);
     buffer_nl(   &buf);
 
-    uart_send(UART, &buf);
+    uart_print(UART, &buf);
     
     while (1) {
 	set_LED1;
