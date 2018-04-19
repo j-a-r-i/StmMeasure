@@ -27,11 +27,8 @@ typedef enum errors {
  */
 typedef uint8_t (*func_mline)(uint8_t timer, buffer_t *buf);
 
-extern uint32_t gEvents;
-extern uint8_t  gUart1Rx;
 extern func_mline gFuncMLine;
 
 
 extern void error(error_t code);
 extern void trace(uint8_t ch);
-extern void buffer_print(buffer_t*);

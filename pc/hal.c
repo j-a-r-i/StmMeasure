@@ -5,7 +5,7 @@
 #include "event.h"
 
 //------------------------------------------------------------------------------
-void buffer_print(buffer_t *buf)
+void uart_print(uint8_t uart, buffer_t *buf)
 {
     for (uint8_t i = buf->position;
 	 i < buf->size;
@@ -28,12 +28,6 @@ void uart_send(uint8_t port, char ch)
 void uart_sends(uint8_t port, char *buf)
 {
     printf("%s", buf);
-}
-
-//------------------------------------------------------------------------------
-void uart_send_nl(uint8_t port)
-{
-    printf("\r\n");
 }
 
 //------------------------------------------------------------------------------

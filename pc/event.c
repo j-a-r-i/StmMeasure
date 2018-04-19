@@ -1,10 +1,8 @@
 #include "hw.h"
 #include "event.h"
 
-
 uint32_t gEvents2;
 
-#define EVENT_SET(ev,arg) gEvents |= (1<<ev); gEventsTable[ev].arg = arg 
 
 void event_init()
 {
@@ -20,7 +18,7 @@ void event_handle()
 	if (gEvents2 & (1<<bit)) {
 	    gEvents2 &= ~(1<<bit);
 
-	    *(gEvents2Table[i].func)(gEvents2Table[i].arg);
+	    (*(gEvents2Table[bit].func))(gEvents2Table[bit].arg);
 	}
     }
 }
