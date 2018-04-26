@@ -24,10 +24,10 @@ ifeq ($(PLACE),3)
 endif
 
 ifeq ($(DEV_CPU),0)
-#	DEV_DEVICE = 072
-#	DEV_FLASH  = 072RBTx
-	DEV_DEVICE = 051
-	DEV_FLASH  = 051R8Tx
+	DEV_DEVICE = 072
+	DEV_FLASH  = 072RBTx
+#	DEV_DEVICE = 051
+#	DEV_FLASH  = 051R8Tx
 	DEV_FPU = 
 endif
 ifeq ($(DEV_CPU),4)
@@ -43,6 +43,7 @@ endif
 
 
 OBJECTS += $(BIN_DIR)/main.o
+OBJECTS += $(BIN_DIR)/event.o
 OBJECTS += $(BIN_DIR)/hal.o
 OBJECTS += $(BIN_DIR)/test.o
 #OBJECTS += $(BIN_DIR)/menu2.o
@@ -51,12 +52,12 @@ OBJECTS += $(BIN_DIR)/meas.o
 OBJECTS += $(BIN_DIR)/scheduler.o
 OBJECTS += $(BIN_DIR)/stm32f$(DEV_CPU)xx_it.o
 OBJECTS += $(BIN_DIR)/system_stm32f$(DEV_CPU)xx.o
-OBJECTS += $(BIN_DIR)/startup_stm32f$(DEV_DEVICE)x8.o
+OBJECTS += $(BIN_DIR)/startup_stm32f$(DEV_DEVICE)xx.o
 OBJECTS += $(BIN_DIR)/buffer.o
 OBJECTS += $(BIN_DIR)/mysensor.o
 OBJECTS += $(BIN_DIR)/outsens.o
 OBJECTS += $(BIN_DIR)/ds1820.o
-OBJECTS += $(BIN_DIR)/sump.o
+#OBJECTS += $(BIN_DIR)/sump.o
 OBJECTS += $(BIN_DIR)/rfm12b.o
 OBJECTS += $(BIN_DIR)/logging.o
 OBJECTS += $(BIN_DIR)/hal_common.o
@@ -96,6 +97,7 @@ COMMON_FLAGS += -fno-delete-null-pointer-checks
 COMMON_FLAGS += -fomit-frame-pointer
 
 C_FLAGS += -Dstm32f$(DEV_CPU)
+C_FLAGS += -DSTM32F$(DEV_DEVICE)
 
 ASM_FLAGS += -x
 ASM_FLAGS += assembler-with-cpp
@@ -134,7 +136,7 @@ info:
 	@echo ""
 
 size:
-	$(SIZE) $(PROJECT).elf
+	$(SIZE) bin/$(PROJECT).elf
 
 clean:
 	rm $(BIN_DIR)/*.* *.o *.d ../drivers/*.o
@@ -144,11 +146,16 @@ tags:
 #flash:
 #	xcopy /Y $(PROJECT).bin e:
 
+
+#OCD_SCRIPT=stm32f0discovery.cfg
+OCD_SCRIPT=st_nucleo_f0.cfg
+
+
 ocd:
-	$(OPENOCD) -s $(OPENOCD_SCRIPTS) -f board/stm32f0discovery.cfg
+	$(OPENOCD) -s $(OPENOCD_SCRIPTS) -f board/$(OCD_SCRIPT)
 
 flash:
-	$(OPENOCD) -s $(OPENOCD_SCRIPTS) -f board/stm32f0discovery.cfg \
+	$(OPENOCD) -s $(OPENOCD_SCRIPTS) -f board/$(OCD_SCRIPT) \
 		-c init \
 		-c "reset init" \
 		-c "sleep 200" \
@@ -162,7 +169,7 @@ flash:
 		-c "reset run"
 
 debug:
-	$(OPENOCD) -s $(OPENOCD_SCRIPTS) -f board/stm32f0discovery.cfg -c init -c "reset init"
+	$(OPENOCD) -s $(OPENOCD_SCRIPTS) -f board/$(OCD_SCRIPT) -c init -c "reset init"
 #	$(OPENOCD) -s $(OPENOCD_SCRIPTS) -f board/stm32f4discovery.cfg -c init -c "reset init"
 #	$(OPENOCD) -s $(OPENOCD_SCRIPTS) -f board/st_nucleo_f7.cfg -c init -c "reset init"
 
