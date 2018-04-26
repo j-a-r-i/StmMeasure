@@ -4,6 +4,23 @@
 #include "buffer.h"
 #include "event.h"
 
+
+//------------------------------------------------------------------------------
+void delay_us(uint16_t ms)
+{
+    printf("[delay]\n");
+}
+
+void io_set(pin_t pin)
+{
+    printf("[set %d]\n", pin);
+}
+
+void io_clear(pin_t pin)
+{
+    printf("[clr %d]\n", pin);
+}
+
 //------------------------------------------------------------------------------
 void uart_print(uint8_t uart, buffer_t *buf)
 {

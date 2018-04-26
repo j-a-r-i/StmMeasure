@@ -1,4 +1,19 @@
 
+CFLAGS += -DSIMULATED
+CFLAGS += -I.
+CFLAGS += -I..
+CFLAGS += -I../../drivers
+
+OBJECTS += simulated.c
+OBJECTS += hal.c
+OBJECTS += event.c
+OBJECTS += ../cli.c
+OBJECTS += ../test.c
+OBJECTS += ../meas.c
+OBJECTS += ../scheduler.c
+OBJECTS += ../../drivers/hal_common.c
+OBJECTS += ../../drivers/buffer.c
+
 
 all:
-	gcc -g simulated.c hal.c event.c ../cli.c ../meas.c ../scheduler.c ../../drivers/hal_common.c ../../drivers/buffer.c -I. -I.. -I../../drivers
+	gcc -g $(CFLAGS) $(OBJECTS)
