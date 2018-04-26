@@ -3,6 +3,7 @@
 #include "buffer.h"
 #include "meas.h"
 #include "scheduler.h"
+#include "test.h"
 
 buffer_t outBuffer;
 
@@ -103,9 +104,21 @@ void cmdUTest(buffer_t *in, buffer_t *out)
 	error(ERR_ARGUMENT);
 	return;
     }
+
+    switch (arg) {
+    case 1:
+	testPrn1();
+	break;
+    case 2:
+	testPrn2();
+	break;
+    case 3:
+	testLed();
+	break;
+    }
     
-    buffer_str(out, "\nTEST1 ");
-    buffer_hex16(out, arg);
+    //buffer_str(out, "\nTEST1 ");
+    //buffer_hex16(out, arg);
 }
 
 void test2(buffer_t *in, buffer_t *out)
@@ -171,23 +184,55 @@ void cmdTimerShow(buffer_t *in, buffer_t *out)
     gFuncMLine = sche_show;
 }
 
+static void arg_timer(buffer_t *in,
+		      uint8_t *timer,
+		      uint8_t *hour,
+		      uint8_t *min,
+		      uint8_t *err)
+{
+    char_equal(in, ' ', err);
+
+    *timer = char_range(in, 'a', 'f', err);
+
+    char_equal(in, ' ', err);
+    
+    *hour =			      \
+	char_range(in, '0', '2', err) * 10 + \
+	char_range(in, '0', '9', err);
+
+    char_equal(in, ':', err);
+
+    *min =			      \
+	char_range(in, '0', '5', err) * 10 + \
+	char_range(in, '0', '9', err);    
+}
+
 void cmdTimerBegin(buffer_t *in, buffer_t *out)
 {
     uint8_t err = 0;
-    uint8_t timer;
-    
-    char_equal(in, ' ', &err);
+    uint8_t timer = 0;
+    uint8_t hour = 0;
+    uint8_t min = 0;
 
-    timer = char_range(in, 'a', 'f', &err);
+    arg_timer(in, &timer, &hour, &min, &err);
 
-    char_equal(in, ' ', &err);
-    
-    uint16_t arg = \
-	char_range(in, '0', '9', &err) * 100 +	\
-	char_range(in, '0', '9', &err) * 10 + \
-	char_range(in, '0', '9', &err);
+    if (err == 0)
+	sche_set_start(timer, hour, min);
+    else
+	error(ERR_ARGUMENT);
 }
 
 void cmdTimerEnd(buffer_t *in, buffer_t *out)
 {
+    uint8_t err = 0;
+    uint8_t timer = 0;
+    uint8_t hour = 0;
+    uint8_t min = 0;
+
+    arg_timer(in, &timer, &hour, &min, &err);
+
+    if (err == 0)
+	sche_set_stop(timer, hour, min);
+    else
+	error(ERR_ARGUMENT);
 }
