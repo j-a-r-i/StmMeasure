@@ -9,11 +9,14 @@ typedef struct {
 
 
 typedef enum {
+
     EV_TIMER2 = 0,
     EV_UART1_RX,
     EV_UART1_TX,
     EV_UART2_RX,
     EV_UART2_TX,
+    EV_SPI1_RX,
+    EV_SPI2_RX,
     EV_USER1,
     EV_USER2,
     EV_MAX
