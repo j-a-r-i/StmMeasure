@@ -10,6 +10,7 @@
 //#include "menu2.h"
 #include "meas.h"
 #include "cli.h"
+#include "event.h"
 
 #define NULL (void*)0
 
@@ -21,11 +22,11 @@ void     SystemClock_Config(void);
 #define KEY_ENTER 10
 #define KEY_BACKSP 127
 
-uint32_t gEvents;
 uint8_t gState;
 uint8_t gCounter;
 func_mline gFuncMLine;
 buffer_t buf;
+buffer_t inBuffer;
 
 #define TEMP_COUNT 3
 uint16_t temp[TEMP_COUNT];
@@ -85,7 +86,7 @@ void cmdScan()
 
 	uart_sends(UART, "ROM_CODE: ");
 	for (i = 0; i < DS1820_ROM_SIZE; i++) {
-	    uart_hex8(UART, gMeasureTable[device].romCode[i]);
+	    //uart_hex8(UART, gMeasureTable[device].romCode[i]);
 	    if (i != (DS1820_ROM_SIZE - 1))
 		uart_send(UART, ':');
 	}
@@ -100,13 +101,59 @@ void show_prompt()
 }
 
 //------------------------------------------------------------------------------
+void on_timer2(uint8_t arg)
+{
+    tgl_LED2;
+    //state_change();    
+}
+
+void on_uart_rx(uint8_t ch)
+{
+    //sump_handle(gUartRx1);
+    //menu_select(gMainMenu, gUart1Rx);
+
+    switch (ch) {
+    case KEY_ENTER:
+	cli_execute(&inBuffer);
+	if (gFuncMLine == 0)
+	    show_prompt();
+	
+	break;
+    case KEY_BACKSP:
+	buffer_remove(&inBuffer);
+	uart_send(UART, ch);
+	break;
+    default:
+	buffer_ch(&inBuffer, ch);
+	uart_send(UART, ch);
+    }
+}
+
+void on_uart_tx(uint8_t arg)
+{
+}
+
+void on_null(uint8_t arg)
+{
+}
+
+//------------------------------------------------------------------------------
+event_t gEvents2Table[] = {
+    [EV_TIMER2]   = { 0, on_timer2 },
+    [EV_UART1_RX] = { 0, on_uart_rx },
+    [EV_UART1_TX] = { 0, on_uart_tx },
+    [EV_UART2_RX] = { 0, on_null },
+    [EV_UART2_TX] = { 0, on_null },
+//    [EV_USER1]    = { 0, on_null },
+//    [EV_USER2]    = { 0, on_null },
+};
+
+
+//------------------------------------------------------------------------------
 int main()
 {
     uint8_t irq2_state;
-    buffer_t inBuffer;
-//    context_t context;
     
-    gEvents = 0;
     gState = 0;
     gFuncMLine = NULL;
     irq2_state = 0;
@@ -148,59 +195,9 @@ int main()
 	delay_us(2000);
     }*/
 
-//    context.state = menu_root;
-//    context.action = NULL;
-//    (*(context.state))(EVENT_PROMPT, &context);
     
     while (1) {
-	if (gEvents & EV_TIMER2) {
-	    tgl_LED2;
-	    //state_change();
-
-	    gEvents &= ~(EV_TIMER2);
-	}
-	if (gEvents & EV_UART1_RX) {
-	    //LL_GPIO_TogglePin(GPIOC, LL_GPIO_PIN_8);
-
-	    //sump_handle(gUartRx1);
-	    //menu_select(gMainMenu, gUart1Rx);
-	    /*(*(context.state))(gUart1Rx, &context);
-	    if (gUart1Rx == EVENT_HELP) {
-		uart_nl(UART);
-		(*(context.state))(EVENT_PROMPT, &context);
-	    }*/
-	    switch (gUart1Rx) {
-	    case KEY_ENTER:
-		cli_execute(&inBuffer);
-		if (gFuncMLine == 0)
-		    show_prompt();
-		break;
-	    case KEY_BACKSP:
-		buffer_remove(&inBuffer);
-		uart_send(UART, gUart1Rx);
-		break;
-	    default:
-		buffer_ch(&inBuffer, gUart1Rx);
-		uart_send(UART, gUart1Rx);
-	    }
-	    
-	    gEvents &= ~(EV_UART1_RX);
-	}
-	if (gEvents & EV_UART2_RX) {
-	    //menu_select(gMainMenu, gUart2Rx);
-	    
-	    gEvents &= ~(EV_UART2_RX);
-	}
-	if (gEvents & EV_SPI1_RX) {
-	    //command(gSpi1Rx);
-	    
-	    gEvents &= ~(EV_SPI1_RX);
-	}
-	if (gEvents & EV_SPI2_RX) {
-	    //command(gSpi2Rx);
-	    
-	    gEvents &= ~(EV_SPI2_RX);
-	}
+	event_handle();
 	if ((irq2_state == 0) && (io_read(PIN_RFM12_IRQ2) == 0)) {
 	    uart_sends(UART, "irq2");
 	    irq2_state = 1;

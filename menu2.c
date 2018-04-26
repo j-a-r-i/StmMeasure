@@ -33,6 +33,28 @@ void arg_value(uint8_t cmd, context_t *context);
 #define MEAS_BEGIN 'a'
 #define MEAS_END   'a' + MAX_MEASURE
 
+/* usage example
+
+void main()
+{
+    context_t context;
+
+    context.state = menu_root;
+    context.action = NULL;
+    (*(context.state))(EVENT_PROMPT, &context);
+
+    while (1) {
+        (*(context.state))(gUart1Rx, &context);
+        if (gUart1Rx == EVENT_HELP) {
+            uart_nl(UART);
+            (*(context.state))(EVENT_PROMPT, &context);
+        }
+   }
+}
+ */
+
+
+
 //------------------------------------------------------------------------------
 void invalid_character(context_t *context)
 {

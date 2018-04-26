@@ -1,6 +1,6 @@
 #pragma once
 
-#define UART 1
+#define UART 2
 
 #ifdef stm32f4
 #include "stm32f4xx_ll_bus.h"
@@ -37,23 +37,14 @@
 
 #define NULL (void*)0
 
-/** Event ids
- */
-#define EV_TIMER2   0x0001
-#define EV_UART1_RX 0x0002
-#define EV_UART1_TX 0x0004
-#define EV_UART2_RX 0x0008
-#define EV_UART2_TX 0x0010
-#define EV_SPI1_RX  0x0020
-#define EV_SPI2_RX  0x0040
 
 /** Error codes
  */
 typedef enum errors {
-    ERR_INVALID_PIN = 0x01,
+    ERR_HARD_FAULT = 0x01,  // CPU fault
+    ERR_INVALID_PIN,
     ERR_UART_PORT,
     ERR_SPI_PORT,
-    ERR_HARD_FAULT,
     ERR_INVALID_MEAS,
     ERR_INVALID_SCHE,
     ERR_BUFFER_OVERFLOW,
@@ -72,11 +63,6 @@ typedef uint8_t (*func_mline)(uint8_t timer, buffer_t *buf);
 extern rfm12b rfm1;
 extern rfm12b rfm2;
 
-extern uint32_t gEvents;
-extern uint8_t  gUart1Rx;
-extern uint8_t  gUart2Rx;
-extern uint8_t  gSpi1Rx;
-extern uint8_t  gSpi2Rx;
 extern func_mline gFuncMLine;
 
 extern void error(error_t code);
