@@ -19,7 +19,8 @@ char gVersion[] = "\nV0.0.7\n\000";
 void     SystemClock_Config(void);
 
 #define DELAY 100
-#define KEY_ENTER 10
+#define KEY_ENTER  10
+#define KEY_ENTER2 13
 #define KEY_BACKSP 127
 
 uint8_t gState;
@@ -114,6 +115,7 @@ void on_uart_rx(uint8_t ch)
 
     switch (ch) {
     case KEY_ENTER:
+    case KEY_ENTER2:
 	cli_execute(&inBuffer);
 	if (gFuncMLine == 0)
 	    show_prompt();
@@ -140,10 +142,10 @@ void on_null(uint8_t arg)
 //------------------------------------------------------------------------------
 event_t gEvents2Table[] = {
     [EV_TIMER2]   = { 0, on_timer2 },
-    [EV_UART1_RX] = { 0, on_uart_rx },
-    [EV_UART1_TX] = { 0, on_uart_tx },
-    [EV_UART2_RX] = { 0, on_null },
-    [EV_UART2_TX] = { 0, on_null },
+    [EV_UART1_RX] = { 0, on_null },
+    [EV_UART1_TX] = { 0, on_null },
+    [EV_UART2_RX] = { 0, on_uart_rx },
+    [EV_UART2_TX] = { 0, on_uart_tx },
 //    [EV_USER1]    = { 0, on_null },
 //    [EV_USER2]    = { 0, on_null },
 };
@@ -169,6 +171,7 @@ int main()
     uart_sends(UART, "starting..");
 
     ds1820_init(PIN_DS1820a);
+#ifdef USE_RFM12
     rfm12b_init(&rfm1, 1, PIN_RFM12_SEL1, PIN_RFM12_IRQ1);
     rfm12b_tx(&rfm1, 1);
     uart_sends(UART, "rf1..");
@@ -176,14 +179,14 @@ int main()
     rfm12b_init(&rfm2, 2, PIN_RFM12_SEL2, PIN_RFM12_IRQ2);
     rfm12b_tx(&rfm2, 0);
     uart_sends(UART, "rf2");
-    
+#endif
     outsens_init();
     //mysensor_init();
 
     temp[1] = 2;
     temp[2] = 3;
     
-    uart_sends(UART, "r\n");
+    uart_send_nl(UART);
     //uart_sends(mysensor_present(1,1, S_TEMP));
 
     /*while (1) {
@@ -198,6 +201,7 @@ int main()
     
     while (1) {
 	event_handle();
+#ifdef USE_RFM12
 	if ((irq2_state == 0) && (io_read(PIN_RFM12_IRQ2) == 0)) {
 	    uart_sends(UART, "irq2");
 	    irq2_state = 1;
@@ -208,6 +212,7 @@ int main()
 	    }
 	    irq2_state = 0;
 	}
+#endif
     }
 }
 
@@ -219,7 +224,15 @@ void error(error_t code)
     buffer_hex8( &buf, code);
     buffer_nl(   &buf);
 
-    uart_print(UART, &buf);
+    uart_sync(UART, &buf);
+
+    if ((code == ERR_INVALID_COMMAND) ||
+	(code == ERR_UART_OVERRUN) ||
+	(code == ERR_ARGUMENT) ||
+	(code == ERR_SYNTAX) ||
+	(code == ERR_ARG_COUNT)) {
+	return;
+    }
     
     while (1) {
 	set_LED1;

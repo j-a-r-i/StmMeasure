@@ -42,6 +42,12 @@
  */
 typedef enum errors {
     ERR_HARD_FAULT = 0x01,  // CPU fault
+
+    ERR_UART_PARITY,
+    ERR_UART_FRAMING,
+    ERR_UART_NOISE,
+    ERR_UART_OVERRUN,
+
     ERR_INVALID_PIN,
     ERR_UART_PORT,
     ERR_SPI_PORT,

@@ -139,7 +139,7 @@ size:
 	$(SIZE) bin/$(PROJECT).elf
 
 clean:
-	rm $(BIN_DIR)/*.* *.o *.d ../drivers/*.o
+	rm $(BIN_DIR)/*.*
 tags:
 	etags *.[ch] ../drivers/*.[ch] ../lib/stm32f0/*.h ../lib/cmsis/stm32f0/*.h
 

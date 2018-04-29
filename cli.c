@@ -151,7 +151,8 @@ void test2(buffer_t *in, buffer_t *out)
 
 void cmdVersion(buffer_t *in, buffer_t *out)
 {
-    buffer_str(out, "\nV0.0.1");
+    buffer_nl(out);
+    buffer_str(out, "V0.0.2");
 }
 
 void cmdMeasShow(buffer_t *in, buffer_t *out)
