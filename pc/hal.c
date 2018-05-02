@@ -1,9 +1,11 @@
 #include "hw.h"
 #include "hal.h"
 #include <termios.h>
+#include <unistd.h>
 #include "buffer.h"
 #include "event.h"
 
+extern void USART2_IRQHandler();
 
 //------------------------------------------------------------------------------
 void delay_us(uint16_t ms)
@@ -22,33 +24,7 @@ void io_clear(pin_t pin)
 }
 
 //------------------------------------------------------------------------------
-void uart_print(uint8_t uart, buffer_t *buf)
-{
-    for (uint8_t i = buf->position;
-	 i < buf->size;
-	 i++)
-    {
-	printf("%c", buf->data[i]);
-    }
-    buffer_clear(buf);
-
-    EVENT_SET(EV_UART1_TX, 0);
-}
-
-//------------------------------------------------------------------------------
-void uart_send(uint8_t port, char ch)
-{
-    printf("%c", ch);
-}
-
-//------------------------------------------------------------------------------
-void uart_sends(uint8_t port, char *buf)
-{
-    printf("%s", buf);
-}
-
-//------------------------------------------------------------------------------
-void event_check()
+uint8_t read_char()
 {
     struct termios tio;
     uint8_t ch, tmp1, tmp2;
@@ -62,7 +38,6 @@ void event_check()
     tio.c_cc[VMIN] = 0;
     tio.c_cc[VTIME] = 0;
     
-    
     tcsetattr(0, TCSANOW, &tio);
 
     ch = getchar();
@@ -72,7 +47,42 @@ void event_check()
     tio.c_cc[VMIN] = tmp1;
     tio.c_cc[VTIME] = tmp2;
 
-    if (ch != 0xFF) {
-	EVENT_SET(EV_UART1_RX, ch);
-    }
+    if (ch == 0xFF)
+	ch = 0;
+    return ch;
 } 
+
+//------------------------------------------------------------------------------
+void *uart_thread(void *ptr)
+{
+    USART_TypeDef *port = (USART_TypeDef*)ptr;
+    uint8_t ch;
+
+    port->TXE = 1;
+    port->TDR = 0;
+    port->RXNE = 0;
+    port->RDR = 0;
+
+    printf("uart thread...\n");
+    while (1) {
+	if (port->TDR != 0) {
+	    port->TXE = 0;
+	    printf("%c", port->TDR);
+	    usleep(3000);  // 3 ms sleep simulated uart sending delay
+	    port->TXE = 1;
+	    port->TDR = 0;
+
+	    if (port->INT_TXE)
+		USART2_IRQHandler();
+	}
+
+	ch = read_char();
+	if (ch) {
+	    port->RDR = ch;
+	    port->RXNE = 1;
+	    USART2_IRQHandler();
+	    port->RXNE = 0;
+	    port->RDR  = 0;
+	}   
+    }
+}
