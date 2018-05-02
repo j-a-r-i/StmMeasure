@@ -41,37 +41,38 @@
 /** Error codes
  */
 typedef enum errors {
-    ERR_HARD_FAULT = 0x01,  // CPU fault
+    ERR_HARD_FAULT         = 0x01,  // CPU fault
 
-    ERR_UART_PARITY,
-    ERR_UART_FRAMING,
-    ERR_UART_NOISE,
-    ERR_UART_OVERRUN,
+    ERR_UART_PARITY,        // 02
+    ERR_UART_FRAMING,       // 03
+    ERR_UART_NOISE,         // 04
+    ERR_UART_OVERRUN,       // 05
 
-    ERR_INVALID_PIN,
-    ERR_UART_PORT,
-    ERR_SPI_PORT,
-    ERR_INVALID_MEAS,
-    ERR_INVALID_SCHE,
-    ERR_BUFFER_OVERFLOW,
-    ERR_ARG_COUNT,
-    ERR_INVALID_COMMAND,
-    ERR_SYNTAX,
-    ERR_ARGUMENT
+    ERR_INVALID_PIN,        // 06
+    ERR_UART_PORT,          // 07
+    ERR_SPI_PORT,           // 08
+    ERR_INVALID_MEAS,       // 09
+    ERR_INVALID_SCHE,       // 0A
+    ERR_BUFFER_OVERFLOW,    // 0B
+    ERR_ARG_COUNT,          // 0C
+    ERR_INVALID_COMMAND,    // 0D
+    ERR_SYNTAX,             // 0E
+    ERR_ARGUMENT            // 0F
 } error_t;
 
 /** Function pointer for multiline printing,
  *  when there is more printing that buffer_t
  *  can hold.
  */
-typedef uint8_t (*func_mline)(uint8_t timer, buffer_t *buf);
+typedef uint8_t (*func_mline)(uint8_t first, buffer_t *buf);
 
 extern rfm12b rfm1;
 extern rfm12b rfm2;
+extern const char *gVersion;
 
 extern func_mline gFuncMLine;
 
-extern void error(error_t code);
+extern void _error(error_t code);
 extern void show_version();
 
 /*

@@ -14,7 +14,7 @@
 
 #define NULL (void*)0
 
-char gVersion[] = "\nV0.0.7\n\000";
+const char *gVersion = "V0.0.8";
 
 void     SystemClock_Config(void);
 
@@ -65,11 +65,6 @@ void state_change()
 }
 
 
-void show_version()
-{
-    uart_sends(UART, gVersion);
-}
-
 void cmdScan()
 {
     uint8_t i;
@@ -96,11 +91,6 @@ void cmdScan()
     }
 }
 
-void show_prompt()
-{
-    uart_send(UART, '>');
-}
-
 //------------------------------------------------------------------------------
 void on_timer2(uint8_t arg)
 {
@@ -116,10 +106,7 @@ void on_uart_rx(uint8_t ch)
     switch (ch) {
     case KEY_ENTER:
     case KEY_ENTER2:
-	cli_execute(&inBuffer);
-	if (gFuncMLine == 0)
-	    show_prompt();
-	
+	cli_execute(&inBuffer);	
 	break;
     case KEY_BACKSP:
 	buffer_remove(&inBuffer);
@@ -133,6 +120,13 @@ void on_uart_rx(uint8_t ch)
 
 void on_uart_tx(uint8_t arg)
 {
+    if (gFuncMLine != NULL) {
+	buffer_clear(&buf);
+	if ((*gFuncMLine)(0, &buf))
+	    gFuncMLine = NULL;
+	buffer_nl(&buf);
+	uart_print(UART, &buf);
+    }
 }
 
 void on_null(uint8_t arg)
@@ -154,11 +148,8 @@ event_t gEvents2Table[] = {
 //------------------------------------------------------------------------------
 int main()
 {
-    uint8_t irq2_state;
-    
     gState = 0;
     gFuncMLine = NULL;
-    irq2_state = 0;
     buffer_clear(&inBuffer);
     
     SystemClock_Config();
@@ -217,7 +208,7 @@ int main()
 }
 
 //------------------------------------------------------------------------------
-void error(error_t code)
+void _error(error_t code)
 {
     buffer_clear(&buf);
     buffer_str(  &buf, "ERR:");

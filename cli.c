@@ -7,36 +7,36 @@
 
 buffer_t outBuffer;
 
-typedef void (*func_cli)(buffer_t*, buffer_t*);
+typedef uint8_t (*func_cli)(buffer_t*, buffer_t*);
 
 typedef struct {
     uint16_t cmd;
     func_cli func;
 } command_t;
 
-void cmdUTest(buffer_t *in, buffer_t *out);
-void cmdVersion(buffer_t *in, buffer_t *out);
-void cmdMeasShow(buffer_t *in, buffer_t *out);
-void cmdMeasTrigger(buffer_t *in, buffer_t *out);
-void cmdMeasHighLimit(buffer_t *in, buffer_t *out);
-void cmdMeasLowLimit(buffer_t *in, buffer_t *out);
-void cmdTimerActivate(buffer_t *in, buffer_t *out);
-void cmdTimerShow(buffer_t *in, buffer_t *out);
-void cmdTimerBegin(buffer_t *in, buffer_t *out);
-void cmdTimerEnd(buffer_t *in, buffer_t *out);
+uint8_t cmdUTest(buffer_t *in, buffer_t *out);
+uint8_t cmdVersion(buffer_t *in, buffer_t *out);
+uint8_t cmdMeasShow(buffer_t *in, buffer_t *out);
+uint8_t cmdMeasTrigger(buffer_t *in, buffer_t *out);
+uint8_t cmdMeasHighLimit(buffer_t *in, buffer_t *out);
+uint8_t cmdMeasLowLimit(buffer_t *in, buffer_t *out);
+uint8_t cmdTimerActivate(buffer_t *in, buffer_t *out);
+uint8_t cmdTimerShow(buffer_t *in, buffer_t *out);
+uint8_t cmdTimerBegin(buffer_t *in, buffer_t *out);
+uint8_t cmdTimerEnd(buffer_t *in, buffer_t *out);
 
 
 #define CMD(a,b) a * 0x100 + b
 
 command_t gCommands[] = {
-    {CMD('m', 's'), cmdMeasShow},
-    {CMD('m', 't'), cmdMeasTrigger},
     {CMD('m', 'h'), cmdMeasHighLimit},
     {CMD('m', 'l'), cmdMeasLowLimit},
+    {CMD('m', 's'), cmdMeasShow},
+    {CMD('m', 't'), cmdMeasTrigger},
     {CMD('t', 'a'), cmdTimerActivate},
-    {CMD('t', 's'), cmdTimerShow},
     {CMD('t', 'b'), cmdTimerBegin},
     {CMD('t', 'e'), cmdTimerEnd},
+    {CMD('t', 's'), cmdTimerShow},
     {CMD('u', 't'), cmdUTest},
     {CMD('v', 'e'), cmdVersion},
     {0,             NULL}
@@ -46,24 +46,36 @@ void cli_execute(buffer_t *buf)
 {
     uint8_t i, found = 0;
     uint16_t cmd;
+    uint8_t err = 0;
+    
     buffer_clear(&outBuffer);
 
-    cmd = buffer_get(buf) << 8;
-    cmd += buffer_get(buf);
+    if (BUFFER_SIZE(buf) > 0) {
+	cmd = buffer_get(buf) << 8;
+	cmd += buffer_get(buf);
 
-    for (i=0; gCommands[i].cmd != 0; i++) {
-	if (cmd == gCommands[i].cmd) {
-	    (*gCommands[i].func)(buf, &outBuffer);
-	    buffer_nl(&outBuffer);
-	    uart_print(UART, &outBuffer);
-	    found = 1;
-	    break;
+	for (i=0; gCommands[i].cmd != 0; i++) {
+	    if (cmd == gCommands[i].cmd) {
+		err = (*gCommands[i].func)(buf, &outBuffer);
+		found = 1;
+		break;
+	    }
+	}
+	if (!found) {
+	    err = ERR_INVALID_COMMAND;
 	}
     }
-    if (!found) {
-	error(ERR_INVALID_COMMAND);
-	uart_print(UART, buf);
+    
+    buffer_nl(&outBuffer);
+    if (err) {
+	buffer_str( &outBuffer, "ERR:");
+	buffer_hex8(&outBuffer, err);
+	buffer_nl(  &outBuffer);
     }
+    if (gFuncMLine == 0)
+	buffer_ch(&outBuffer, '>');
+    uart_print(UART, &outBuffer);
+    
     buffer_clear(buf);
 }
 
@@ -89,7 +101,7 @@ void char_equal(buffer_t *in, char comp, uint8_t *error)
 }
 
 //------------------------------------------------------------------------------
-void cmdUTest(buffer_t *in, buffer_t *out)
+uint8_t cmdUTest(buffer_t *in, buffer_t *out)
 {
     uint8_t err = 0;
     
@@ -101,8 +113,7 @@ void cmdUTest(buffer_t *in, buffer_t *out)
 	char_range(in, '0', '9', &err);
 
     if (err) {
-	error(ERR_ARGUMENT);
-	return;
+	return ERR_ARGUMENT;
     }
 
     switch (arg) {
@@ -115,10 +126,8 @@ void cmdUTest(buffer_t *in, buffer_t *out)
     case 3:
 	testLed();
 	break;
-    }
-    
-    //buffer_str(out, "\nTEST1 ");
-    //buffer_hex16(out, arg);
+    }    
+    return 0;
 }
 
 void test2(buffer_t *in, buffer_t *out)
@@ -126,7 +135,7 @@ void test2(buffer_t *in, buffer_t *out)
     uint8_t err = 0;
     
     if (buffer_get(in) != ' ') {
-	error(ERR_SYNTAX);
+	_error(ERR_SYNTAX);
 	return;
     }
 
@@ -139,7 +148,7 @@ void test2(buffer_t *in, buffer_t *out)
 	char_range(in, '0', '9', &err);
 
     if (err) {
-	error(ERR_ARGUMENT);
+	_error(ERR_ARGUMENT);
 	return;
     }
     
@@ -149,40 +158,50 @@ void test2(buffer_t *in, buffer_t *out)
     buffer_dec(out, min);
 }
 
-void cmdVersion(buffer_t *in, buffer_t *out)
+uint8_t cmdVersion(buffer_t *in, buffer_t *out)
 {
     buffer_nl(out);
-    buffer_str(out, "V0.0.2");
+    buffer_str(out, gVersion);
+
+    return 0;
 }
 
-void cmdMeasShow(buffer_t *in, buffer_t *out)
+uint8_t cmdMeasShow(buffer_t *in, buffer_t *out)
 {
     buffer_nl(out);
     meas_show(1, out);
     gFuncMLine = meas_show;
+
+    return 0;
 }
 
-void cmdMeasTrigger(buffer_t *in, buffer_t *out)
+uint8_t cmdMeasTrigger(buffer_t *in, buffer_t *out)
 {
+    return 0;
 }
 
-void cmdMeasHighLimit(buffer_t *in, buffer_t *out)
+uint8_t cmdMeasHighLimit(buffer_t *in, buffer_t *out)
 {
+    return 0;
 }
 
-void cmdMeasLowLimit(buffer_t *in, buffer_t *out)
+uint8_t cmdMeasLowLimit(buffer_t *in, buffer_t *out)
 {
+    return 0;
 }
 
-void cmdTimerActivate(buffer_t *in, buffer_t *out)
+uint8_t cmdTimerActivate(buffer_t *in, buffer_t *out)
 {
+    return 0;
 }
 
-void cmdTimerShow(buffer_t *in, buffer_t *out)
+uint8_t cmdTimerShow(buffer_t *in, buffer_t *out)
 {
     buffer_nl(out);
     sche_show(1, out);
     gFuncMLine = sche_show;
+
+    return 0;
 }
 
 static void arg_timer(buffer_t *in,
@@ -208,7 +227,7 @@ static void arg_timer(buffer_t *in,
 	char_range(in, '0', '9', err);    
 }
 
-void cmdTimerBegin(buffer_t *in, buffer_t *out)
+uint8_t cmdTimerBegin(buffer_t *in, buffer_t *out)
 {
     uint8_t err = 0;
     uint8_t timer = 0;
@@ -220,10 +239,12 @@ void cmdTimerBegin(buffer_t *in, buffer_t *out)
     if (err == 0)
 	sche_set_start(timer, hour, min);
     else
-	error(ERR_ARGUMENT);
+	err = ERR_ARGUMENT;
+
+    return err;
 }
 
-void cmdTimerEnd(buffer_t *in, buffer_t *out)
+uint8_t cmdTimerEnd(buffer_t *in, buffer_t *out)
 {
     uint8_t err = 0;
     uint8_t timer = 0;
@@ -235,5 +256,7 @@ void cmdTimerEnd(buffer_t *in, buffer_t *out)
     if (err == 0)
 	sche_set_stop(timer, hour, min);
     else
-	error(ERR_ARGUMENT);
+	err = ERR_ARGUMENT;
+
+    return err;
 }
