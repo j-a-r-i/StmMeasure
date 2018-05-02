@@ -227,7 +227,7 @@ SPI_TypeDef *spi_port(uint8_t port)
 	ret = SPI2;
 	break;
     default:
-	error(ERR_SPI_PORT);
+	_error(ERR_SPI_PORT);
 	break;
     }
     return ret;
@@ -277,5 +277,5 @@ uint16_t spi_write(uint8_t port, uint16_t data)
  */
 void HardFault_Handler(void)
 {
-    error(ERR_HARD_FAULT);
+    _error(ERR_HARD_FAULT);
 }

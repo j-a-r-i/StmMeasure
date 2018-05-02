@@ -56,7 +56,7 @@ void sche_set_start(uint8_t timer, uint8_t hour, uint8_t min)
 	gScheduleTable[timer].start.enabled = 1;
     }
     else
-	error(ERR_INVALID_SCHE);
+	_error(ERR_INVALID_SCHE);
 }
 
 void sche_set_stop(uint8_t timer, uint8_t hour, uint8_t min)
@@ -67,5 +67,5 @@ void sche_set_stop(uint8_t timer, uint8_t hour, uint8_t min)
 	gScheduleTable[timer].stop.enabled = 1;
     }
     else
-	error(ERR_INVALID_SCHE);
+	_error(ERR_INVALID_SCHE);
 }

@@ -41,7 +41,7 @@ void meas_set_high_limit(uint8_t meas, uint16_t val)
     if (meas < MAX_MEASURE)
 	gMeasureTable[meas].highLimit = val;
     else
-	error(ERR_INVALID_MEAS);
+	_error(ERR_INVALID_MEAS);
 }
 
 void meas_set_low_limit(uint8_t meas, uint16_t val)
@@ -49,5 +49,5 @@ void meas_set_low_limit(uint8_t meas, uint16_t val)
     if (meas < MAX_MEASURE)
 	gMeasureTable[meas].lowLimit = val;
     else
-	error(ERR_INVALID_MEAS);
+	_error(ERR_INVALID_MEAS);
 }
